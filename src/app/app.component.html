@@ -1,9 +1,31 @@
 <div class="container">
   <div>
     <h1>BGG collection</h1>
+    @if (counter != 0) {
+      Wczytano {{ counter }} gier
+    }
     <div>
-    <input class="upload" type="file" (change)="onFileUpload($event)"/>
-      <div class="options">Options</div>
+      <input class="upload" type="file" (change)="onFileUpload($event)"/>
+      <div style="position: relative;" >
+      <div class="options" (click)="toggleOptions()">Options</div>
+        @if (isExpanded) {
+          <div id="options-container" style="position: absolute; margin-top: 34px; top: 100%; right: 0; background-color: white; z-index: 10; padding: 10px; border: 1px solid #ccc;">
+            <div class="option-item">
+              <label for="excludeExpansions">Exclude Expansions</label>
+              <input (change)="onUpdate()" type="checkbox" id="excludeExpansions" [(ngModel)]="options.excludeExpansions"/>
+            </div>
+
+            @for (option of options.tooltipNames; track option) {
+              @for (key of objectKeys(option); track key) {
+                <div class="option-item">
+                  <label for="{{ key }}">{{ key }}</label>
+                  <input (change)="onUpdate()" type="checkbox" id="{{ key }}" [(ngModel)]="option[key]"/>
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
     </div>
     <highcharts-chart
       [Highcharts]="Highcharts"
@@ -17,3 +39,4 @@
     It can be done from here, click <span class="bold" (click)="addUserName()">here</span> and input your user name.
   </div>
 </div>
+

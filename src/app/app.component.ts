@@ -2,27 +2,62 @@ import {Component} from '@angular/core';
 import * as Papa from 'papaparse';
 import * as Highcharts from 'highcharts';
 import {HighchartsChartModule} from "highcharts-angular";
+import {FormsModule} from "@angular/forms";
 
+// noinspection SpellCheckingInspection
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   imports: [
-    HighchartsChartModule
+    HighchartsChartModule,
+    FormsModule
   ],
   // Use SCSS here
 })
 export class AppComponent {
+  counter = 0;
+  isExpanded: boolean = false;
   Highcharts: typeof Highcharts = Highcharts;
   private readonly link = "https://boardgamegeek.com/boardgame/";
+  options = {
+    tooltipNames: [
+      {objectid: false},
+      {originalname: false},
+      {bggrecplayers: false},
+      {baverage: false},
+      {bggrecagerange: false},
+      {playingtime: false}
+    ] as TooltipName[],
+    excludeExpansions: true,
+  };
+
   chartOptions: Highcharts.Options = {
-    chart: { type: 'scatter',height: 800 },
-    title: { text: 'Average vs AvgWeight' },
-    xAxis: { title: { text: 'Average' } },
-    yAxis: { title: { text: 'AvgWeight' } },
+    chart: {type: 'scatter', height: 800},
+    title: {text: 'Average vs AvgWeight'},
+    xAxis: {title: {text: 'Average'}},
+    yAxis: {title: {text: 'AvgWeight'}},
     tooltip: {
       useHTML: true,
-      pointFormat: 'Name: <b>{point.objectName}</b><br>Weight: <b>{point.x}</b><br>Rating: <b>{point.y}</b>'
+      formatter: function () {
+        const point = this as Highcharts.Point;
+        console.log(point);
+        let tooltip = `Name: <b>${point.name}</b><br>`;
+        tooltip += `Rating: <b>${point.y}</b><br>`;
+        tooltip += `Weight: <b>${point.x}</b><br>`;
+
+        // Include selected options in the tooltip based on checkbox state
+        const options = point.options as any;
+        for (let tooltipName of Object.keys(options)) {
+          if (options[tooltipName]) {
+            // @ts-ignore
+            tooltip += `${tooltipName}: <b>${point[tooltipName]}</b><br>`;
+          }
+        }
+
+        return tooltip;
+      }
+      // pointFormat: 'Name: <b>{point.objectName}</b><br>Weight: <b>{point.x}</b><br>Rating: <b>{point.y}</b>'
     },
     series: [
       {
@@ -68,6 +103,7 @@ export class AppComponent {
   }
 
   extractData(data: any[]): DataPoint[] {
+    this.counter = 0;
     const dataPoints: DataPoint[] = [];
     data.forEach((row) => {
       const average = +parseFloat(row['average']).toFixed(2); // Column name in the CSV
@@ -75,7 +111,12 @@ export class AppComponent {
       const objectName = row['objectname']; // Assume there's a column named categoryName
       const objectid = row['objectid']; // Assume there's a column named categoryName
       if (!isNaN(average) && !isNaN(avgWeight)) {
-        dataPoints.push({ x: avgWeight, y: average, objectName, objectid });
+        if (this.options.excludeExpansions) {
+          if (row['itemtype'] === 'standalone') {
+            dataPoints.push({x: avgWeight, y: average, objectName, objectid});
+            this.counter++;
+          }
+        }
       }
     });
     return dataPoints;
@@ -105,12 +146,33 @@ export class AppComponent {
       window.open(`https://boardgamegeek.com/geekcollection.php?action=exportcsv&subtype=boardgame&username={userName}&all=1`)
     }
   }
+
+  toggleOptions() {
+    this.isExpanded = !this.isExpanded;
+  }
+
+  get objectKeys() {
+    return Object.keys;
+  }
+
+  onUpdate() {
+    console.log("asd")
+  }
 }
 
-export interface DataPoint {
+interface DataPoint {
   x: number;
   y: number;
   objectName: string;
   objectid?: string;
   url?: string;
+  originalname?: false;
+  bggrecplayers?: false;
+  baverage?: false;
+  bggrecagerange?: false;
+  playingtime?: false;
 }
+
+type TooltipName = {
+  [key: string]: boolean;
+};
