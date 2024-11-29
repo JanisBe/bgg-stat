@@ -1,0 +1,24 @@
+.bold {
+  font-weight: bold;
+  color: blue;
+  text-decoration: underline;
+}
+
+.container {
+  margin: 10px;
+  font-family: "Unica One", arial, helvetica, sans-serif, serif;
+}
+
+.upload {
+  float: left;
+  border: 1px solid darkcyan;
+  padding: 5px ;
+  border-radius: 5px;
+}
+
+.options {
+  float: right;
+  border: 1px solid darkcyan;
+  padding: 5px ;
+  border-radius: 5px;
+}
