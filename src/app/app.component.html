@@ -8,6 +8,7 @@
       <input class="upload" type="file" (change)="onFileUpload($event)"/>
       <div style="position: relative;" >
       <div class="options" (click)="toggleOptions()">Options</div>
+
         @if (isExpanded) {
           <div id="options-container" style="position: absolute; margin-top: 34px; top: 100%; right: 0; background-color: white; z-index: 10; padding: 10px; border: 1px solid #ccc;">
             <div class="option-item">
@@ -25,6 +26,7 @@
             }
           </div>
         }
+        `
       </div>
     </div>
     <highcharts-chart
@@ -35,6 +37,10 @@
   </div>
   <div>
     <h2>Info:</h2>
+    Ściągnij swoją kolekcję z bgg jako csv, a następnie wczytaj ja tu.
+    Można to zrobic z tutaj, klikając <span class="bold" (click)="addUserName()">tutaj</span> i wpisując nazwę użytkownika.
+  <br>
+  <br>
     Download your collection from bgg as csv, then upload it here.
     It can be done from here, click <span class="bold" (click)="addUserName()">here</span> and input your user name.
   </div>

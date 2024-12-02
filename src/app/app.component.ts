@@ -129,6 +129,9 @@ export class AppComponent {
         {
           type: 'scatter',
           name: 'Games',
+          marker: {
+            symbol: 'circle'
+          },
           data: dataPoints.map((point) => ({
             x: point.x,
             y: point.y,
