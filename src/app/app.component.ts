@@ -1,9 +1,12 @@
 import {Component} from '@angular/core';
 import * as Papa from 'papaparse';
+import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
 import {HighchartsChartModule} from "highcharts-angular";
 import {FormsModule} from "@angular/forms";
-
+import {ColDef, GridOptions} from "ag-grid-community";
+import {AgGridAngular} from "ag-grid-angular";
+import {tableConfig} from "./tableConfig";
 // noinspection SpellCheckingInspection
 @Component({
   selector: 'app-root',
@@ -11,14 +14,31 @@ import {FormsModule} from "@angular/forms";
   styleUrls: ['./app.component.scss'],
   imports: [
     HighchartsChartModule,
-    FormsModule
+    FormsModule,
+    AgGridAngular
   ],
-  // Use SCSS here
+  standalone: true,
 })
 export class AppComponent {
   counter = 0;
   isExpanded: boolean = false;
+  dataLoaded: boolean = false;
   Highcharts: typeof Highcharts = Highcharts;
+  rowData: any[] = [];
+  columnDefs: ColDef[] = [];
+  gridOptions: GridOptions = {
+    autoSizeStrategy: {
+      type: 'fitGridWidth',
+      defaultMinWidth: 100,
+      columnLimits: [
+        {
+          colId: 'objectname',
+          minWidth: 350
+        }
+      ]
+    },
+  };
+
   private readonly link = "https://boardgamegeek.com/boardgame/";
   options = {
     tooltipNames: [
@@ -31,7 +51,6 @@ export class AppComponent {
     ] as TooltipName[],
     excludeExpansions: true,
   };
-
   chartOptions: Highcharts.Options = {
     chart: {type: 'scatter', height: 800},
     title: {text: 'Average vs AvgWeight'},
@@ -91,15 +110,34 @@ export class AppComponent {
       Papa.parse(file, {
         header: true, // Parse the CSV as JSON objects with keys from the header row
         skipEmptyLines: true,
-        complete: (result) => {
+        complete: (result: ParseResult<DataPoint>) => {
           const dataPoints = this.extractData(result.data as any[]);
+          this.dataLoaded = true;
           this.updateChart(dataPoints);
+          this.processTableData(result);
         },
         error: (error) => {
           console.error('Error parsing CSV:', error);
         },
       });
     }
+  }
+
+  private processTableData(result: ParseResult<DataPoint>) {
+    this.rowData = result.data;
+    this.columnDefs = Object.keys(result.data[0] || {}).map(key => ({
+      field: key,
+      headerName: key.charAt(0).toUpperCase() + key.slice(1),
+      filter: true,
+      hide: this.isHidden(key),
+      suppressToolPanel: true
+    }));
+    this.columnDefs[0].pinned = "left";
+  }
+
+  isHidden(key: string): boolean {
+    let foundKey = tableConfig.find(obj => obj.hasOwnProperty(key));
+    return foundKey ? foundKey[key] : true;
   }
 
   extractData(data: any[]): DataPoint[] {
@@ -146,7 +184,7 @@ export class AppComponent {
   addUserName() {
     const userName = prompt('Enter your name:');
     if (userName) {
-      window.open(`https://boardgamegeek.com/geekcollection.php?action=exportcsv&subtype=boardgame&username={userName}&all=1`)
+      window.open(`https://boardgamegeek.com/geekcollection.php?action=exportcsv&subtype=boardgame&username=${userName}&all=1`)
     }
   }
 
