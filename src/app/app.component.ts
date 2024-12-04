@@ -4,7 +4,7 @@ import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
 import {HighchartsChartModule} from "highcharts-angular";
 import {FormsModule} from "@angular/forms";
-import {ColDef, ValueParserParams} from "ag-grid-community";
+import {ColDef} from "ag-grid-community";
 import {AgGridAngular} from "ag-grid-angular";
 import {gridOptions, tableConfig} from "./tableConfig";
 
@@ -26,7 +26,6 @@ export class AppComponent {
   Highcharts: typeof Highcharts = Highcharts;
   rowData: any[] = [];
   columnDefs: ColDef[] = [];
-  allColumns: string[] = [];
   visibleColumns: Set<string> = new Set();
   @ViewChild('agGrid') agGrid!: AgGridAngular;
   protected readonly gridOptions = gridOptions;
@@ -50,6 +49,7 @@ export class AppComponent {
 
         // Include selected options in the tooltip based on checkbox state
         const options = point.options as any;
+        console.log(options)
         for (let tooltipName of Object.keys(options)) {
           if (options[tooltipName]) {
             // @ts-ignore
@@ -73,7 +73,7 @@ export class AppComponent {
         cursor: 'pointer', // Show pointer cursor for clickable points
         point: {
           events: {
-            click: function (event: any) {
+            click: function () {
               // Open a webpage when a point is clicked
               let options = this.options as any;
               const url = options['url']; // URL is passed as a property in point data
@@ -104,12 +104,17 @@ export class AppComponent {
           this.dataLoaded = true;
           this.updateChart(dataPoints);
           this.processTableData(result);
+          this.initializeChart();
         },
         error: (error) => {
           console.error('Error parsing CSV:', error);
         },
       });
     }
+  }
+
+  private initializeChart(): void {
+    Highcharts.chart('hcContainer', this.chartOptions);
   }
 
   private processTableData(result: ParseResult<DataPoint>) {
@@ -217,10 +222,11 @@ export class AppComponent {
       this.visibleColumns.add(entry.key);
       this.agGrid.api.setColumnsVisible([entry.key], true);
     }
+    Highcharts.chart("hcContainer", this.chartOptions);
   }
 
   onUpdateExcludeExpansions(excludeExpansions: boolean) {
-
+    this.excludeExpansions = excludeExpansions;
   }
 }
 

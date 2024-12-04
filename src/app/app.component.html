@@ -7,7 +7,11 @@
     <div>
       <input class="upload" type="file" (change)="onFileUpload($event)"/>
       <div class="options" style="position: relative;">
-        <div (click)="toggleOptions()">Options</div>
+        <div (click)="toggleOptions()" class="tooltip">Opcje / Options
+          @if (!dataLoaded) {
+            <span class="tooltiptext">Najpierw załaduj plik csv<br>First load csv file</span>
+          }
+        </div>
 
         @if (isExpanded && dataLoaded) {
           <div id="options-container"
@@ -30,11 +34,12 @@
         }
       </div>
     </div>
-    <highcharts-chart
-      [Highcharts]="Highcharts"
-      [options]="chartOptions"
-      style="width: 100%; height: 100%; display: block;"
-    ></highcharts-chart>
+    <div style="width: 100%; height: 100%; display: block;" id="hcContainer"></div>
+    <!--    <highcharts-chart-->
+    <!--      [Highcharts]="Highcharts"-->
+    <!--      [options]="chartOptions"-->
+    <!--      style="width: 100%; height: 100%; display: block;"-->
+    <!--    ></highcharts-chart>-->
   </div>
   <div>
     @if (dataLoaded) {
@@ -49,6 +54,7 @@
     }
   </div>
   <div>
+    <br>
     <h2>Info:</h2>
     Ściągnij swoją kolekcję z bgg jako csv, a następnie wczytaj ja tu.
     Można to zrobic z tutaj, klikając <span class="bold" (click)="addUserName()">tutaj</span> i
