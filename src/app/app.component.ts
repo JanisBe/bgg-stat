@@ -4,9 +4,9 @@ import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
 import {HighchartsChartModule} from "highcharts-angular";
 import {FormsModule} from "@angular/forms";
-import {ColDef} from "ag-grid-community";
+import {ColDef, ValueParserParams} from "ag-grid-community";
 import {AgGridAngular} from "ag-grid-angular";
-import {getValueForKey, gridOptions, tableConfig, TooltipName, visibleRows} from "./tableConfig";
+import {gridOptions, tableConfig} from "./tableConfig";
 
 @Component({
   selector: 'app-root',
@@ -30,12 +30,9 @@ export class AppComponent {
   visibleColumns: Set<string> = new Set();
   @ViewChild('agGrid') agGrid!: AgGridAngular;
   protected readonly gridOptions = gridOptions;
-
+  excludeExpansions = true;
   private readonly link = "https://boardgamegeek.com/boardgame/";
-  options = {
-    tooltipNames: visibleRows,
-    excludeExpansions: true,
-  };
+
 
   chartOptions: Highcharts.Options = {
     chart: {type: 'scatter', height: 800},
@@ -90,12 +87,18 @@ export class AppComponent {
     },
   };
 
+  checkboxOptions = Object.keys(tableConfig).map(key => ({
+    key,
+    visible: tableConfig[key].visible
+  }));
+
   onFileUpload(event: any): void {
     const file = event.target.files[0];
     if (file) {
       Papa.parse(file, {
         header: true, // Parse the CSV as JSON objects with keys from the header row
         skipEmptyLines: true,
+        dynamicTyping: true,
         complete: (result: ParseResult<DataPoint>) => {
           const dataPoints = this.extractData(result.data as any[]);
           this.dataLoaded = true;
@@ -110,8 +113,14 @@ export class AppComponent {
   }
 
   private processTableData(result: ParseResult<DataPoint>) {
-    this.populateVisibleColumns(tableConfig);
-    this.rowData = result.data;
+    this.populateVisibleColumns();
+    this.rowData = result.data.map(row => {
+      // Check if 'bggrecagerange' has a '+' and remove it, then convert to number
+      if (row.bggrecagerange && typeof row.bggrecagerange === 'string') {
+        row.bggrecagerange = parseFloat(row.bggrecagerange.replace('+', ''));
+      }
+      return row;
+    });
     this.columnDefs = this.generateColumns(result.data[0] as unknown as any[]);
     this.columnDefs[0].pinned = "left";
   }
@@ -122,16 +131,30 @@ export class AppComponent {
       headerName: key.charAt(0).toUpperCase() + key.slice(1),
       filter: true,
       hide: !this.visibleColumns.has(key),
-      suppressColumnsToolPanel: true
-    }));
+      suppressColumnsToolPanel: true,
+      floatingFilter: true,
+      cellDataType: this.calculateCellDataType(key),
+    } as ColDef));
   }
 
-  populateVisibleColumns(columnNames: TooltipName[]): void {
-    columnNames.map(obj => {
-      if (obj[Object.keys(obj)[0]]) {
-        this.visibleColumns.add(Object.keys(obj)[0]);
+  private calculateCellDataType(key: string): string {
+    const entry = tableConfig[key];
+    if (entry.type) {
+      if (entry.type === "n") {
+        return "number";
+      } else if (entry.type === "b") {
+        return "boolean";
       }
-    });
+    }
+    return "text"
+  }
+
+  populateVisibleColumns(): void {
+    for (const key in tableConfig) {
+      if (tableConfig[key] && tableConfig[key].visible) {
+        this.visibleColumns.add(key);
+      }
+    }
   }
 
   extractData(data: any[]): DataPoint[] {
@@ -143,7 +166,7 @@ export class AppComponent {
       const objectName = row['objectname']; // Assume there's a column named categoryName
       const objectid = row['objectid']; // Assume there's a column named categoryName
       if (!isNaN(average) && !isNaN(avgWeight)) {
-        if (this.options.excludeExpansions) {
+        if (this.excludeExpansions) {
           if (row['itemtype'] === 'standalone') {
             dataPoints.push({x: avgWeight, y: average, objectName, objectid});
             this.counter++;
@@ -186,33 +209,26 @@ export class AppComponent {
     this.isExpanded = !this.isExpanded;
   }
 
-  get objectKeys() {
-    return Object.keys;
-  }
-
-  onUpdate(event: any) {
-    let key = Object.keys(event)[0];
-    if (this.visibleColumns.has(key) && !event[key]) {
-      this.visibleColumns.delete(key);
-      this.agGrid.api.setColumnsVisible([key], false);
-      const value = getValueForKey(this.options.tooltipNames, key);
-      console.log(value)
-    } else if (event[key]) {
-      this.visibleColumns.add(key);
-      this.agGrid.api.setColumnsVisible([key], true);
-    }
-    if (this.dataLoaded && this.agGrid.api) {
-      // this.agGrid.api.setColumnsVisible([...this.visibleColumns], true);
+  onUpdate(entry: { key: string, visible: boolean }) {
+    if (this.visibleColumns.has(entry.key) && !entry.visible) {
+      this.visibleColumns.delete(entry.key);
+      this.agGrid.api.setColumnsVisible([entry.key], false);
+    } else if (entry.visible) {
+      this.visibleColumns.add(entry.key);
+      this.agGrid.api.setColumnsVisible([entry.key], true);
     }
   }
 
+  onUpdateExcludeExpansions(excludeExpansions: boolean) {
+
+  }
 }
 
 interface DataPoint {
+  bggrecagerange?: number | string;
   x: number;
   y: number;
   objectName: string;
   objectid?: string;
   url?: string;
 }
-

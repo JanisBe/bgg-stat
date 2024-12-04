@@ -14,18 +14,17 @@
                style="position: absolute; margin-top: 34px; top: 100%; right: 0; background-color: white; z-index: 10; padding: 10px; border: 1px solid #ccc;">
             <div class="option-item">
               <label for="excludeExpansions">Exclude Expansions</label>
-              <input (change)="onUpdate(options)" type="checkbox" id="excludeExpansions"
-                     [(ngModel)]="options.excludeExpansions"/>
+              <input (change)="onUpdateExcludeExpansions(excludeExpansions)" type="checkbox"
+                     id="excludeExpansions"
+                     [(ngModel)]="excludeExpansions"/>
             </div>
 
-            @for (option of options.tooltipNames; track option) {
-              @for (key of objectKeys(option); track key) {
-                <div class="option-item">
-                  <label for="{{ key }}">{{ key }}</label>
-                  <input (change)="onUpdate(option)" type="checkbox" id="{{ key }}"
-                         [(ngModel)]="option[key]"/>
-                </div>
-              }
+            @for (option of checkboxOptions; track option) {
+              <div class="option-item">
+                <label for="{{ option.key }}">{{ option.key }}</label>
+                <input type="checkbox" (change)="onUpdate(option)" [checked]="option.visible"
+                       [(ngModel)]="option.visible"/>
+              </div>
             }
           </div>
         }
