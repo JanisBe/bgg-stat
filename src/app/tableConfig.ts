@@ -1,4 +1,6 @@
-export const tableConfig: KeyValueObject[] = [
+import {GridOptions} from "ag-grid-community";
+
+export const tableConfig: TooltipName[] = [
   { "objectname": true },
   { "objectid": false, },
   { "rating": true },
@@ -58,4 +60,43 @@ export const tableConfig: KeyValueObject[] = [
   { "version_yearpublished": false },
   { "version_nickname": false }
 ]
-type KeyValueObject = { [key: string]: boolean };
+export const gridOptions: GridOptions = {
+  autoSizeStrategy: {
+    type: 'fitGridWidth',
+    defaultMinWidth: 100,
+    columnLimits: [
+      {
+        colId: 'objectname',
+        minWidth: 350
+      }
+    ]
+  },
+};
+
+export const desiredKeys = [
+  'objectid',
+  'originalname',
+  'bggrecplayers',
+  'baverage',
+  'bggrecagerange',
+  'playingtime'
+];
+
+function createPartialObject(data: TooltipName[], keys: string[]) {
+  return keys
+  .map(key => {
+    const obj = data.find(item => item.hasOwnProperty(key));
+    return obj ? { [key]: obj[key] } : undefined;
+  })
+  .filter(item => item !== undefined);
+}
+export function getValueForKey(data: TooltipName[], key: string) {
+  const foundObject = data.find(item => item.hasOwnProperty(key));
+  return foundObject ? foundObject[key] : undefined;
+}
+
+export const visibleRows: TooltipName[] = createPartialObject(tableConfig, desiredKeys);
+
+export type TooltipName = {
+  [key: string]: boolean;
+};

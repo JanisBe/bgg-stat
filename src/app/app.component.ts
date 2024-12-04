@@ -1,13 +1,13 @@
-import {Component} from '@angular/core';
+import {Component, ViewChild} from '@angular/core';
 import * as Papa from 'papaparse';
 import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
 import {HighchartsChartModule} from "highcharts-angular";
 import {FormsModule} from "@angular/forms";
-import {ColDef, GridOptions} from "ag-grid-community";
+import {ColDef} from "ag-grid-community";
 import {AgGridAngular} from "ag-grid-angular";
-import {tableConfig} from "./tableConfig";
-// noinspection SpellCheckingInspection
+import {getValueForKey, gridOptions, tableConfig, TooltipName, visibleRows} from "./tableConfig";
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -26,31 +26,17 @@ export class AppComponent {
   Highcharts: typeof Highcharts = Highcharts;
   rowData: any[] = [];
   columnDefs: ColDef[] = [];
-  gridOptions: GridOptions = {
-    autoSizeStrategy: {
-      type: 'fitGridWidth',
-      defaultMinWidth: 100,
-      columnLimits: [
-        {
-          colId: 'objectname',
-          minWidth: 350
-        }
-      ]
-    },
-  };
+  allColumns: string[] = [];
+  visibleColumns: Set<string> = new Set();
+  @ViewChild('agGrid') agGrid!: AgGridAngular;
+  protected readonly gridOptions = gridOptions;
 
   private readonly link = "https://boardgamegeek.com/boardgame/";
   options = {
-    tooltipNames: [
-      {objectid: false},
-      {originalname: false},
-      {bggrecplayers: false},
-      {baverage: false},
-      {bggrecagerange: false},
-      {playingtime: false}
-    ] as TooltipName[],
+    tooltipNames: visibleRows,
     excludeExpansions: true,
   };
+
   chartOptions: Highcharts.Options = {
     chart: {type: 'scatter', height: 800},
     title: {text: 'Average vs AvgWeight'},
@@ -60,7 +46,7 @@ export class AppComponent {
       useHTML: true,
       formatter: function () {
         const point = this as Highcharts.Point;
-        console.log(point);
+        // console.log(point);
         let tooltip = `Name: <b>${point.name}</b><br>`;
         tooltip += `Rating: <b>${point.y}</b><br>`;
         tooltip += `Weight: <b>${point.x}</b><br>`;
@@ -124,20 +110,28 @@ export class AppComponent {
   }
 
   private processTableData(result: ParseResult<DataPoint>) {
+    this.populateVisibleColumns(tableConfig);
     this.rowData = result.data;
-    this.columnDefs = Object.keys(result.data[0] || {}).map(key => ({
-      field: key,
-      headerName: key.charAt(0).toUpperCase() + key.slice(1),
-      filter: true,
-      hide: this.isHidden(key),
-      suppressToolPanel: true
-    }));
+    this.columnDefs = this.generateColumns(result.data[0] as unknown as any[]);
     this.columnDefs[0].pinned = "left";
   }
 
-  isHidden(key: string): boolean {
-    let foundKey = tableConfig.find(obj => obj.hasOwnProperty(key));
-    return foundKey ? foundKey[key] : true;
+  private generateColumns(collection: any[]) {
+    return Object.keys(collection || {}).map(key => ({
+      field: key,
+      headerName: key.charAt(0).toUpperCase() + key.slice(1),
+      filter: true,
+      hide: !this.visibleColumns.has(key),
+      suppressColumnsToolPanel: true
+    }));
+  }
+
+  populateVisibleColumns(columnNames: TooltipName[]): void {
+    columnNames.map(obj => {
+      if (obj[Object.keys(obj)[0]]) {
+        this.visibleColumns.add(Object.keys(obj)[0]);
+      }
+    });
   }
 
   extractData(data: any[]): DataPoint[] {
@@ -196,9 +190,22 @@ export class AppComponent {
     return Object.keys;
   }
 
-  onUpdate() {
-    console.log("asd")
+  onUpdate(event: any) {
+    let key = Object.keys(event)[0];
+    if (this.visibleColumns.has(key) && !event[key]) {
+      this.visibleColumns.delete(key);
+      this.agGrid.api.setColumnsVisible([key], false);
+      const value = getValueForKey(this.options.tooltipNames, key);
+      console.log(value)
+    } else if (event[key]) {
+      this.visibleColumns.add(key);
+      this.agGrid.api.setColumnsVisible([key], true);
+    }
+    if (this.dataLoaded && this.agGrid.api) {
+      // this.agGrid.api.setColumnsVisible([...this.visibleColumns], true);
+    }
   }
+
 }
 
 interface DataPoint {
@@ -207,13 +214,5 @@ interface DataPoint {
   objectName: string;
   objectid?: string;
   url?: string;
-  originalname?: false;
-  bggrecplayers?: false;
-  baverage?: false;
-  bggrecagerange?: false;
-  playingtime?: false;
 }
 
-type TooltipName = {
-  [key: string]: boolean;
-};

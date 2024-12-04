@@ -6,27 +6,29 @@
     }
     <div>
       <input class="upload" type="file" (change)="onFileUpload($event)"/>
-      <div style="position: relative;" >
-      <div class="options" (click)="toggleOptions()">Options</div>
+      <div class="options" style="position: relative;">
+        <div (click)="toggleOptions()">Options</div>
 
-        @if (isExpanded) {
-          <div id="options-container" style="position: absolute; margin-top: 34px; top: 100%; right: 0; background-color: white; z-index: 10; padding: 10px; border: 1px solid #ccc;">
+        @if (isExpanded && dataLoaded) {
+          <div id="options-container"
+               style="position: absolute; margin-top: 34px; top: 100%; right: 0; background-color: white; z-index: 10; padding: 10px; border: 1px solid #ccc;">
             <div class="option-item">
               <label for="excludeExpansions">Exclude Expansions</label>
-              <input (change)="onUpdate()" type="checkbox" id="excludeExpansions" [(ngModel)]="options.excludeExpansions"/>
+              <input (change)="onUpdate(options)" type="checkbox" id="excludeExpansions"
+                     [(ngModel)]="options.excludeExpansions"/>
             </div>
 
             @for (option of options.tooltipNames; track option) {
               @for (key of objectKeys(option); track key) {
                 <div class="option-item">
                   <label for="{{ key }}">{{ key }}</label>
-                  <input (change)="onUpdate()" type="checkbox" id="{{ key }}" [(ngModel)]="option[key]"/>
+                  <input (change)="onUpdate(option)" type="checkbox" id="{{ key }}"
+                         [(ngModel)]="option[key]"/>
                 </div>
               }
             }
           </div>
         }
-        `
       </div>
     </div>
     <highcharts-chart
@@ -36,8 +38,9 @@
     ></highcharts-chart>
   </div>
   <div>
-    @if (dataLoaded){
+    @if (dataLoaded) {
       <ag-grid-angular
+        #agGrid
         [rowData]="rowData"
         [columnDefs]="columnDefs"
         [gridOptions]="gridOptions"
@@ -49,11 +52,13 @@
   <div>
     <h2>Info:</h2>
     Ściągnij swoją kolekcję z bgg jako csv, a następnie wczytaj ja tu.
-    Można to zrobic z tutaj, klikając <span class="bold" (click)="addUserName()">tutaj</span> i wpisując nazwę użytkownika.
-  <br>
-  <br>
+    Można to zrobic z tutaj, klikając <span class="bold" (click)="addUserName()">tutaj</span> i
+    wpisując nazwę użytkownika.
+    <br>
+    <br>
     Download your collection from bgg as csv, then upload it here.
-    It can be done from here, click <span class="bold" (click)="addUserName()">here</span> and input your user name.
+    It can be done from here, click <span class="bold" (click)="addUserName()">here</span> and input
+    your user name.
   </div>
 
 </div>
