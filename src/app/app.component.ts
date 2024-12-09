@@ -49,9 +49,9 @@ export class AppComponent {
 
         // Include selected options in the tooltip based on checkbox state
         const options = point.options as any;
-        console.log(options)
+        // console.log(options)
         for (let tooltipName of Object.keys(options)) {
-          if (options[tooltipName]) {
+          if (!!options[tooltipName]) {
             // @ts-ignore
             tooltip += `${tooltipName}: <b>${point[tooltipName]}</b><br>`;
           }
@@ -92,9 +92,9 @@ export class AppComponent {
     visible: tableConfig[key].visible
   }));
 
-  onFileUpload(event: any): void {
+  async onFileUpload(event: any) {
     const file = event.target.files[0];
-    if (file) {
+    if (file && await this.validateCsv(file)) {
       Papa.parse(file, {
         header: true, // Parse the CSV as JSON objects with keys from the header row
         skipEmptyLines: true,
@@ -110,6 +110,8 @@ export class AppComponent {
           console.error('Error parsing CSV:', error);
         },
       });
+    } else {
+      alert("Problem z plikiem CSV, czy na pewno pochodzi z BGG?\nProblem with CSV file, is it for sure from BGG?");
     }
   }
 
@@ -166,16 +168,19 @@ export class AppComponent {
     this.counter = 0;
     const dataPoints: DataPoint[] = [];
     data.forEach((row) => {
-      const average = +parseFloat(row['average']).toFixed(2); // Column name in the CSV
-      const avgWeight = +parseFloat(row['avgweight']).toFixed(2); // Column name in the CSV
-      const objectName = row['objectname']; // Assume there's a column named categoryName
-      const objectid = row['objectid']; // Assume there's a column named categoryName
+      const average = +parseFloat(row['average']).toFixed(2);
+      const avgWeight = +parseFloat(row['avgweight']).toFixed(2);
+      const objectName = row['objectname'];
+      const objectid = row['objectid'];
       if (!isNaN(average) && !isNaN(avgWeight)) {
         if (this.excludeExpansions) {
           if (row['itemtype'] === 'standalone') {
             dataPoints.push({x: avgWeight, y: average, objectName, objectid});
             this.counter++;
           }
+        } else {
+          dataPoints.push({x: avgWeight, y: average, objectName, objectid});
+          this.counter++;
         }
       }
     });
@@ -193,6 +198,7 @@ export class AppComponent {
             symbol: 'circle'
           },
           data: dataPoints.map((point) => ({
+            name: point.objectName,
             x: point.x,
             y: point.y,
             objectName: point.objectName,
@@ -227,6 +233,32 @@ export class AppComponent {
 
   onUpdateExcludeExpansions(excludeExpansions: boolean) {
     this.excludeExpansions = excludeExpansions;
+  }
+
+  private validateCsv(file: File): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const expectedHeader = ['objectname', 'objectid', 'rating', 'numplays'];
+      if (file) {
+        Papa.parse(file, {
+          header: false, // Parse without converting to objects
+          preview: 1,    // Only read the first row
+          complete: (results: Papa.ParseResult<string[]>) => {
+            // Get the first row (header)
+            const fileHeader = results.data[0];
+
+            // Check if the header matches exactly
+            const result = fileHeader.length === 58 &&
+              expectedHeader.every((value, index) =>
+                value.toLowerCase().trim() === fileHeader[index].toLowerCase().trim()
+              );
+            resolve(result);
+          },
+          error(error) {
+            reject(error);
+          }
+        });
+      }
+    });
   }
 }
 

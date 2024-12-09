@@ -5,7 +5,7 @@
       Wczytano {{ counter }} gier
     }
     <div>
-      <input class="upload" type="file" (change)="onFileUpload($event)"/>
+      <input class="upload" accept="text/csv" type="file" (change)="onFileUpload($event)"/>
       <div class="options" style="position: relative;">
         <div (click)="toggleOptions()" class="tooltip">Opcje / Options
           @if (!dataLoaded) {
