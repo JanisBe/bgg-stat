@@ -8,6 +8,8 @@ import {ColDef} from "ag-grid-community";
 import {AgGridAngular} from "ag-grid-angular";
 import {gridOptions, tableConfig} from "./tableConfig";
 
+const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url'];
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -23,15 +25,16 @@ export class AppComponent {
   counter = 0;
   isExpanded: boolean = false;
   dataLoaded: boolean = false;
-  Highcharts: typeof Highcharts = Highcharts;
   rowData: any[] = [];
   columnDefs: ColDef[] = [];
   visibleColumns: Set<string> = new Set();
   @ViewChild('agGrid') agGrid!: AgGridAngular;
   protected readonly gridOptions = gridOptions;
-  excludeExpansions = true;
-  private readonly link = "https://boardgamegeek.com/boardgame/";
+  excludeExpansions = false;
+  private results: DataPoint[] = [];
 
+
+  private readonly link = "https://boardgamegeek.com/boardgame/";
 
   chartOptions: Highcharts.Options = {
     chart: {type: 'scatter', height: 800},
@@ -51,7 +54,7 @@ export class AppComponent {
         const options = point.options as any;
         // console.log(options)
         for (let tooltipName of Object.keys(options)) {
-          if (!!options[tooltipName]) {
+          if (!!options[tooltipName] &&  !NOT_DISPLAYED.includes(tooltipName)) {
             // @ts-ignore
             tooltip += `${tooltipName}: <b>${point[tooltipName]}</b><br>`;
           }
@@ -65,10 +68,20 @@ export class AppComponent {
       {
         type: 'scatter',
         name: 'Games',
-        data: [], // Data will be dynamically updated
+        data: [],
+      },
+      {
+        type: 'scatter',
+        name: 'Expansions',
+        data: [],
       },
     ],
     plotOptions: {
+      scatter:{
+        marker:{
+          radius: 2.5
+        },
+      },
       series: {
         cursor: 'pointer', // Show pointer cursor for clickable points
         point: {
@@ -86,7 +99,6 @@ export class AppComponent {
       },
     },
   };
-
   checkboxOptions = Object.keys(tableConfig).map(key => ({
     key,
     visible: tableConfig[key].visible
@@ -100,9 +112,10 @@ export class AppComponent {
         skipEmptyLines: true,
         dynamicTyping: true,
         complete: (result: ParseResult<DataPoint>) => {
-          const dataPoints = this.extractData(result.data as any[]);
+          this.results = result.data;
+          const dataPoints = this.extractData();
           this.dataLoaded = true;
-          this.updateChart(dataPoints);
+          this.updateChart(dataPoints[0], dataPoints[1]);
           this.processTableData(result);
           this.initializeChart();
         },
@@ -164,30 +177,55 @@ export class AppComponent {
     }
   }
 
-  extractData(data: any[]): DataPoint[] {
+  extractData(): DataPoint[][] {
+    const data = this.results;
     this.counter = 0;
     const dataPoints: DataPoint[] = [];
+    const expansion: DataPoint[] = [];
     data.forEach((row) => {
       const average = +parseFloat(row['average']).toFixed(2);
       const avgWeight = +parseFloat(row['avgweight']).toFixed(2);
       const objectName = row['objectname'];
       const objectid = row['objectid'];
+
       if (!isNaN(average) && !isNaN(avgWeight)) {
+        const dataPoint: DataPoint = {
+          x: avgWeight,
+          y: average,
+          objectname: objectName,
+          objectid
+        };
+
+        // Dynamically add all properties from the original row
+        Object.keys(row).forEach(key => {
+          // Only add if the column is configured to be visible
+          if (tableConfig[key]) {
+            dataPoint[key] = row[key];
+          }
+        });
+
         if (this.excludeExpansions) {
           if (row['itemtype'] === 'standalone') {
-            dataPoints.push({x: avgWeight, y: average, objectName, objectid});
+            dataPoints.push(dataPoint);
             this.counter++;
           }
         } else {
-          dataPoints.push({x: avgWeight, y: average, objectName, objectid});
-          this.counter++;
+          if (row['itemtype'] === 'standalone') {
+            dataPoints.push(dataPoint);
+            this.counter++;
+          }
+          if (row['itemtype'] === 'expansion') {
+            expansion.push(dataPoint);
+            this.counter++;
+          }
         }
       }
     });
-    return dataPoints;
+    return [dataPoints,expansion];
   }
 
-  updateChart(dataPoints: DataPoint[]): void {
+
+  updateChart(dataPoints: DataPoint[], expansions: DataPoint[]): void {
     this.chartOptions = {
       ...this.chartOptions,
       series: [
@@ -197,16 +235,38 @@ export class AppComponent {
           marker: {
             symbol: 'circle'
           },
-          data: dataPoints.map((point) => ({
-            name: point.objectName,
-            x: point.x,
-            y: point.y,
-            objectName: point.objectName,
-            url: this.link + point.objectid,
-          })),
+          data: this.processPoints(dataPoints),
+        },
+        {
+          type: 'scatter',
+          name: 'Expansions',
+          marker: {
+            symbol: 'square'
+          },
+          data: this.processPoints(expansions),
         },
       ],
     };
+  }
+
+  private processPoints(dataPoints: DataPoint[]) {
+    return dataPoints.map((point) => {
+      const additionalProps = {};
+      Object.keys(tableConfig).forEach(key => {
+        if (tableConfig[key].visible) {
+          // @ts-ignore
+          additionalProps[key] = point[key];
+        }
+      });
+
+      return {
+        name: point.objectname,
+        x: point.x,
+        y: point.y,
+        url: this.link + point.objectid,
+        ...additionalProps
+      };
+    });
   }
 
   addUserName() {
@@ -228,11 +288,39 @@ export class AppComponent {
       this.visibleColumns.add(entry.key);
       this.agGrid.api.setColumnsVisible([entry.key], true);
     }
+
+    this.chartOptions = {
+      ...this.chartOptions,
+      tooltip: {
+        ...this.chartOptions.tooltip,
+        formatter: function () {
+          const point = this as Highcharts.Point;
+          let tooltip = `Name: <b>${point.name}</b><br>`;
+          tooltip += `Rating: <b>${point.y}</b><br>`;
+          tooltip += `Weight: <b>${point.x}</b><br>`;
+
+          // Include selected options in the tooltip based on checkbox state
+          const options = point.options as any;
+          for (let tooltipName of Object.keys(options)) {
+            // Only add to tooltip if the checkbox for this column is checked
+            if (!!options[tooltipName] &&  !NOT_DISPLAYED.includes(tooltipName)) {
+              tooltip += `${tooltipName}: <b>${options[tooltipName]}</b><br>`;
+            }
+          }
+
+          return tooltip;
+        }
+      }
+    };
+
+    // Redraw the chart with updated options
     Highcharts.chart("hcContainer", this.chartOptions);
   }
-
   onUpdateExcludeExpansions(excludeExpansions: boolean) {
     this.excludeExpansions = excludeExpansions;
+    const dataPoints = this.extractData();
+    this.updateChart(dataPoints[0], dataPoints[1]);
+    Highcharts.chart("hcContainer", this.chartOptions);
   }
 
   private validateCsv(file: File): Promise<boolean> {
@@ -264,9 +352,10 @@ export class AppComponent {
 
 interface DataPoint {
   bggrecagerange?: number | string;
+  [key: string]: any;
   x: number;
   y: number;
-  objectName: string;
+  objectname: string;
   objectid?: string;
   url?: string;
 }
