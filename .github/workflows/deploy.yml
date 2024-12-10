@@ -5,32 +5,36 @@ on:
     branches:
       - master
 
+permissions:
+  contents: write  # Explicitly set write permissions
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the repository
-    - name: Checkout code
-      uses: actions/checkout@v4
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # Set up Node.js
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20  # Use the Node.js version compatible with your Angular project
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    # Install dependencies
-    - name: Install dependencies
-      run: npm ci
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
 
-    # Build the Angular app
-    - name: Build the Angular app
-      run: npm run build -- --configuration=production
+      # Build the Angular app
+      - name: Build the Angular app
+        run: npm run build -- --configuration=production
 
-    # Deploy to GitHub Pages
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist/bgg-stat  # Replace with your actual build output directory
+      # Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/bgg-stat
+          full_commit_message: ${{ github.event.head_commit.message }}
