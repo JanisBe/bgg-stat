@@ -7,6 +7,7 @@ import {FormsModule} from "@angular/forms";
 import {ColDef} from "ag-grid-community";
 import {AgGridAngular} from "ag-grid-angular";
 import {gridOptions, tableConfig} from "./tableConfig";
+import {HttpClient} from "@angular/common/http";
 
 const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url'];
 
@@ -17,11 +18,14 @@ const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url'];
   imports: [
     HighchartsChartModule,
     FormsModule,
-    AgGridAngular
+    AgGridAngular,
   ],
   standalone: true,
 })
 export class AppComponent {
+  constructor(private http: HttpClient) {
+  }
+
   counter = 0;
   isExpanded: boolean = false;
   dataLoaded: boolean = false;
@@ -54,7 +58,7 @@ export class AppComponent {
         const options = point.options as any;
         // console.log(options)
         for (let tooltipName of Object.keys(options)) {
-          if (!!options[tooltipName] &&  !NOT_DISPLAYED.includes(tooltipName)) {
+          if (!!options[tooltipName] && !NOT_DISPLAYED.includes(tooltipName)) {
             // @ts-ignore
             tooltip += `${tooltipName}: <b>${point[tooltipName]}</b><br>`;
           }
@@ -79,8 +83,8 @@ export class AppComponent {
       },
     ],
     plotOptions: {
-      scatter:{
-        marker:{
+      scatter: {
+        marker: {
           radius: 2.5
         },
       },
@@ -108,6 +112,10 @@ export class AppComponent {
 
   async onFileUpload(event: any) {
     const file = event.target.files[0];
+    await this.pareseCSV(file)
+  }
+
+  async pareseCSV(file: any) {
     if (file && await this.validateCsv(file)) {
       Papa.parse(file, {
         header: true, // Parse the CSV as JSON objects with keys from the header row
@@ -223,7 +231,7 @@ export class AppComponent {
         }
       }
     });
-    return [dataPoints,expansion];
+    return [dataPoints, expansion];
   }
 
 
@@ -307,7 +315,7 @@ export class AppComponent {
           const options = point.options as any;
           for (let tooltipName of Object.keys(options)) {
             // Only add to tooltip if the checkbox for this column is checked
-            if (!!options[tooltipName] &&  !NOT_DISPLAYED.includes(tooltipName)) {
+            if (!!options[tooltipName] && !NOT_DISPLAYED.includes(tooltipName)) {
               tooltip += `${tooltipName}: <b>${options[tooltipName]}</b><br>`;
             }
           }
@@ -320,6 +328,7 @@ export class AppComponent {
     // Redraw the chart with updated options
     Highcharts.chart("hcContainer", this.chartOptions);
   }
+
   onUpdateExcludeExpansions(excludeExpansions: boolean) {
     this.excludeExpansions = excludeExpansions;
     const dataPoints = this.extractData();
@@ -352,11 +361,20 @@ export class AppComponent {
       }
     });
   }
+
+  onLoadMyExample() {
+    const filePath = '/assets/collection.csv'; // Path to your CSV file in the assets folder
+    this.http.get(filePath, {responseType: 'text'}).subscribe((data) => {
+      this.pareseCSV(data);
+    });
+  }
 }
 
 interface DataPoint {
   bggrecagerange?: number | string;
+
   [key: string]: any;
+
   x: number;
   y: number;
   objectname: string;
