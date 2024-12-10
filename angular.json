@@ -44,6 +44,7 @@
           },
           "configurations": {
             "production": {
+              "baseHref": "/bgg-stat/",
               "budgets": [
                 {
                   "type": "initial",
