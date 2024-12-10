@@ -69,11 +69,13 @@ export class AppComponent {
         type: 'scatter',
         name: 'Games',
         data: [],
+        color: 'rgba(5,141,199,0.5)'
       },
       {
         type: 'scatter',
         name: 'Expansions',
         data: [],
+        color: 'rgba(237,86,27,0.5)'
       },
     ],
     plotOptions: {
@@ -233,7 +235,8 @@ export class AppComponent {
           type: 'scatter',
           name: 'Games',
           marker: {
-            symbol: 'circle'
+            symbol: 'circle',
+            color: 'rgba(237,86,27,0.5)'
           },
           data: this.processPoints(dataPoints),
         },
@@ -241,7 +244,8 @@ export class AppComponent {
           type: 'scatter',
           name: 'Expansions',
           marker: {
-            symbol: 'square'
+            symbol: 'square',
+            color: 'rgba(5,141,199,0.5)'
           },
           data: this.processPoints(expansions),
         },
