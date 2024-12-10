@@ -54,9 +54,7 @@ export class AppComponent {
         tooltip += `Rating: <b>${point.y}</b><br>`;
         tooltip += `Weight: <b>${point.x}</b><br>`;
 
-        // Include selected options in the tooltip based on checkbox state
         const options = point.options as any;
-        // console.log(options)
         for (let tooltipName of Object.keys(options)) {
           if (!!options[tooltipName] && !NOT_DISPLAYED.includes(tooltipName)) {
             // @ts-ignore
@@ -66,7 +64,6 @@ export class AppComponent {
 
         return tooltip;
       }
-      // pointFormat: 'Name: <b>{point.objectName}</b><br>Weight: <b>{point.x}</b><br>Rating: <b>{point.y}</b>'
     },
     series: [
       {
@@ -89,15 +86,14 @@ export class AppComponent {
         },
       },
       series: {
-        cursor: 'pointer', // Show pointer cursor for clickable points
+        cursor: 'pointer',
         point: {
           events: {
             click: function () {
-              // Open a webpage when a point is clicked
               let options = this.options as any;
-              const url = options['url']; // URL is passed as a property in point data
+              const url = options['url'];
               if (url) {
-                window.open(url, '_blank'); // Open in a new tab
+                window.open(url, '_blank');
               }
             },
           },
@@ -118,7 +114,7 @@ export class AppComponent {
   async pareseCSV(file: any) {
     if (file && await this.validateCsv(file)) {
       Papa.parse(file, {
-        header: true, // Parse the CSV as JSON objects with keys from the header row
+        header: true,
         skipEmptyLines: true,
         dynamicTyping: true,
         complete: (result: ParseResult<DataPoint>) => {
@@ -145,7 +141,6 @@ export class AppComponent {
   private processTableData(result: ParseResult<DataPoint>) {
     this.populateVisibleColumns();
     this.rowData = result.data.map(row => {
-      // Check if 'bggrecagerange' has a '+' and remove it, then convert to number
       if (row.bggrecagerange && typeof row.bggrecagerange === 'string') {
         row.bggrecagerange = parseFloat(row.bggrecagerange.replace('+', ''));
       }
@@ -206,9 +201,7 @@ export class AppComponent {
           objectid
         };
 
-        // Dynamically add all properties from the original row
         Object.keys(row).forEach(key => {
-          // Only add if the column is configured to be visible
           if (tableConfig[key]) {
             dataPoint[key] = row[key];
           }
@@ -311,10 +304,8 @@ export class AppComponent {
           tooltip += `Rating: <b>${point.y}</b><br>`;
           tooltip += `Weight: <b>${point.x}</b><br>`;
 
-          // Include selected options in the tooltip based on checkbox state
           const options = point.options as any;
           for (let tooltipName of Object.keys(options)) {
-            // Only add to tooltip if the checkbox for this column is checked
             if (!!options[tooltipName] && !NOT_DISPLAYED.includes(tooltipName)) {
               tooltip += `${tooltipName}: <b>${options[tooltipName]}</b><br>`;
             }
@@ -325,7 +316,6 @@ export class AppComponent {
       }
     };
 
-    // Redraw the chart with updated options
     Highcharts.chart("hcContainer", this.chartOptions);
   }
 
@@ -341,13 +331,11 @@ export class AppComponent {
       const expectedHeader = ['objectname', 'objectid', 'rating', 'numplays'];
       if (file) {
         Papa.parse(file, {
-          header: false, // Parse without converting to objects
-          preview: 1,    // Only read the first row
+          header: false,
+          preview: 1,
           complete: (results: Papa.ParseResult<string[]>) => {
-            // Get the first row (header)
             const fileHeader = results.data[0];
 
-            // Check if the header matches exactly
             const result = fileHeader.length === 58 &&
               expectedHeader.every((value, index) =>
                 value.toLowerCase().trim() === fileHeader[index].toLowerCase().trim()
@@ -363,7 +351,7 @@ export class AppComponent {
   }
 
   onLoadMyExample() {
-    const filePath = '/assets/collection.csv'; // Path to your CSV file in the assets folder
+    const filePath = '/assets/collection.csv';
     this.http.get(filePath, {responseType: 'text'}).subscribe((data) => {
       this.pareseCSV(data);
     });
