@@ -3,7 +3,7 @@ name: Deploy Angular App to GitHub Pages
 on:
   push:
     branches:
-      - main  # Replace 'main' with your default branch if different
+      - master
 
 jobs:
   build-and-deploy:
@@ -12,13 +12,13 @@ jobs:
     steps:
     # Checkout the repository
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     # Set up Node.js
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: 16  # Use the Node.js version compatible with your Angular project
+        node-version: 20  # Use the Node.js version compatible with your Angular project
 
     # Install dependencies
     - name: Install dependencies
@@ -30,7 +30,7 @@ jobs:
 
     # Deploy to GitHub Pages
     - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./dist/bgg-stat  # Replace with your actual build output directory
