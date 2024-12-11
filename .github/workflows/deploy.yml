@@ -31,7 +31,9 @@ jobs:
       - name: Build the Angular app
         run: npm run build -- --configuration=production
 
-      # Deploy to GitHub Pages
+      - name: Create .nojekyll file
+        run: touch ./dist/bgg-stat/.nojekyll
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
