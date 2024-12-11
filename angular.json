@@ -29,6 +29,7 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
+              "src/.nojekyll",
               {
                 "glob": "collection.csv",
                 "input": "src/assets/",

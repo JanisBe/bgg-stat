@@ -38,3 +38,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist/bgg-stat
           full_commit_message: ${{ github.event.head_commit.message }}
+          keep_files: true  # Optional: keeps existing files
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: ${{ github.event.head_commit.message }}
