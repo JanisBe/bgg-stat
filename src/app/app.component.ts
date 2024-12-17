@@ -9,6 +9,7 @@ import {ColDef, RowClickedEvent} from "ag-grid-community";
 import {AgGridAngular} from "ag-grid-angular";
 import {gridOptions, tableConfig} from "./tableConfig";
 import {HttpClient} from "@angular/common/http";
+import {environment} from "../environments/environment";
 
 const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url'];
 
@@ -376,7 +377,7 @@ export class AppComponent {
   }
 
   onLoadMyExample() {
-    const filePath = './assets/collection.csv';
+    const filePath = environment.filePath;
     this.http.get(filePath, {responseType: 'text'}).subscribe((data) => {
       this.pareseCSV(data);
     });
