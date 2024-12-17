@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  filePath: '/assets/collection.csv'
+  filePath: '/bgg-stat/assets/collection.csv'
 };
