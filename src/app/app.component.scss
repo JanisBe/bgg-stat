@@ -25,6 +25,7 @@
   float: right;
   margin-right: 10px;
 }
+
 .options {
   cursor: pointer;
   float: right;
@@ -41,13 +42,14 @@
   background-color: white; /* White background for the options container */
   z-index: 10; /* Ensures the options container appears above other content */
   padding: 10px;
-  width: 200px;
+  width: 250px;
   border: 1px solid #ccc; /* Optional border for styling */
 }
 
 .option-item {
   margin: 5px 0;
 }
+
 .tooltip {
   position: relative;
   display: inline-block;
@@ -78,10 +80,28 @@
   border-style: solid;
   border-color: transparent transparent transparent black;
 }
+
 .tooltip:hover .tooltiptext {
   visibility: visible;
 }
 
 .myCSV {
   display: inline;
+}
+
+#options-container {
+  position: absolute;
+  margin-top: 10px;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  z-index: 10;
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+
+#hcContainer {
+  width: 100%;
+  height: 100%;
+  display: block;
 }

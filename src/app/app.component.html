@@ -10,18 +10,17 @@
         (click)="onLoadMyExample()" class="myCSV bold">użyj mojego CSV</p>
       </div>
       @if (dataLoaded) {
-        @if (isExpanded) {
-          <div class="options" style="position: relative;">
-            <div (click)="toggleOptions()" class="tooltip">Opcje / Options
-              @if (!dataLoaded) {
-                <span
-                  class="tooltiptext">Najpierw załaduj plik csv<br>First load csv file</span>
-              }
-            </div>
 
+        <div class="options" style="position: relative;">
+          <div (click)="toggleOptions()" class="tooltip">Opcje / Options
+            @if (!dataLoaded) {
+              <span
+                class="tooltiptext">Najpierw załaduj plik csv<br>First load csv file</span>
+            }
+          </div>
 
+          @if (isExpanded) {
             <div id="options-container"
-                 style="position: absolute; margin-top: 34px; top: 100%; right: 0; background-color: white; z-index: 10; padding: 10px; border: 1px solid #ccc;"
                  (mouseleave)="isExpanded=false">
               @for (option of checkboxOptions; track option) {
                 <div class="option-item">
@@ -32,9 +31,9 @@
                 </div>
               }
             </div>
+          }
+        </div>
 
-          </div>
-        }
         <div class="expansions">
           <label for="excludeExpansions">Exclude Expansions</label>
           <input (change)="onUpdateExcludeExpansions(excludeExpansions)"
@@ -45,7 +44,7 @@
 
       }
     </div>
-    <div style="width: 100%; height: 100%; display: block;" id="hcContainer"></div>
+    <div id="hcContainer"></div>
   </div>
   <div>
     @if (dataLoaded) {
@@ -61,8 +60,6 @@
     }
   </div>
   <div>
-    <br>
-    <br>
     <br>
     <br>
     <h2>Info:</h2>

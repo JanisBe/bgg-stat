@@ -45,9 +45,9 @@ export class AppComponent {
 
   chartOptions: Highcharts.Options = {
     chart: {type: 'scatter', height: 800},
-    title: {text: 'Average vs AvgWeight'},
-    xAxis: {title: {text: 'Average'}},
-    yAxis: {title: {text: 'AvgWeight'}},
+    title: {text: 'Ocena na BGG vs Trudność'},
+    xAxis: {title: {text: 'Ocena BGG'}},
+    yAxis: {title: {text: 'Ciężar (trudność)'}},
     tooltip: {
       useHTML: true,
       formatter: function () {
