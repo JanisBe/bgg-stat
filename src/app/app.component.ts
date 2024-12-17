@@ -376,7 +376,7 @@ export class AppComponent {
   }
 
   onLoadMyExample() {
-    const filePath = '/assets/collection.csv';
+    const filePath = './assets/collection.csv';
     this.http.get(filePath, {responseType: 'text'}).subscribe((data) => {
       this.pareseCSV(data);
     });
