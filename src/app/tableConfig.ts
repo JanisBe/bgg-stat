@@ -2,7 +2,6 @@ import {GridOptions} from "ag-grid-community";
 
 export const tableConfig: TooltipName = {
   "objectname": {"visible": true },
-  "objectid": {"visible": false, "type": "n"},
   "rating": {"visible": true, "type": "n"},
   "numplays": {"visible": false, "type": "n"},
   "weight": {"visible": false, "type": "n"},
@@ -58,7 +57,8 @@ export const tableConfig: TooltipName = {
   "version_publishers": {"visible": false},
   "version_languages": {"visible": false},
   "version_yearpublished": {"visible": false, "type": "n"},
-  "version_nickname": {"visible": false}
+  "version_nickname": {"visible": false},
+  "objectid": {"visible": true, "type": "n"}
 }
 
 

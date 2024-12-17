@@ -6,35 +6,44 @@
     }
     <div>
       <div class="upload">
-        <input accept="text/csv" type="file" (change)="onFileUpload($event)"/> lub <p class="myCSV bold" (click)="onLoadMyExample()">użyj mojego CSV</p>
+        <input (change)="onFileUpload($event)" accept="text/csv" type="file"/> lub <p
+        (click)="onLoadMyExample()" class="myCSV bold">użyj mojego CSV</p>
       </div>
-      <div class="options" style="position: relative;">
-        <div (click)="toggleOptions()" class="tooltip">Opcje / Options
-          @if (!dataLoaded) {
-            <span class="tooltiptext">Najpierw załaduj plik csv<br>First load csv file</span>
-          }
-        </div>
-
-        @if (isExpanded && dataLoaded) {
-          <div id="options-container"
-               style="position: absolute; margin-top: 34px; top: 100%; right: 0; background-color: white; z-index: 10; padding: 10px; border: 1px solid #ccc;" (mouseleave)="isExpanded=false">
-            <div class="option-item">
-              <label for="excludeExpansions">Exclude Expansions</label>
-              <input (change)="onUpdateExcludeExpansions(excludeExpansions)" type="checkbox"
-                     id="excludeExpansions"
-                     [(ngModel)]="excludeExpansions"/>
+      @if (dataLoaded) {
+        @if (isExpanded) {
+          <div class="options" style="position: relative;">
+            <div (click)="toggleOptions()" class="tooltip">Opcje / Options
+              @if (!dataLoaded) {
+                <span
+                  class="tooltiptext">Najpierw załaduj plik csv<br>First load csv file</span>
+              }
             </div>
 
-            @for (option of checkboxOptions; track option) {
-              <div class="option-item">
-                <label for="{{ option.key }}">{{ option.key }}</label>
-                <input type="checkbox" (change)="onUpdate(option)" [checked]="option.visible"
-                       [(ngModel)]="option.visible"/>
-              </div>
-            }
+
+            <div id="options-container"
+                 style="position: absolute; margin-top: 34px; top: 100%; right: 0; background-color: white; z-index: 10; padding: 10px; border: 1px solid #ccc;"
+                 (mouseleave)="isExpanded=false">
+              @for (option of checkboxOptions; track option) {
+                <div class="option-item">
+                  <label for="{{ option.key }}">{{ option.key }}</label>
+                  <input type="checkbox" (change)="onUpdate(option)"
+                         [checked]="option.visible"
+                         [(ngModel)]="option.visible"/>
+                </div>
+              }
+            </div>
+
           </div>
         }
-      </div>
+        <div class="expansions">
+          <label for="excludeExpansions">Exclude Expansions</label>
+          <input (change)="onUpdateExcludeExpansions(excludeExpansions)"
+                 type="checkbox"
+                 id="excludeExpansions"
+                 [(ngModel)]="excludeExpansions"/>
+        </div>
+
+      }
     </div>
     <div style="width: 100%; height: 100%; display: block;" id="hcContainer"></div>
   </div>
@@ -47,6 +56,7 @@
         [gridOptions]="gridOptions"
         class="ag-theme-alpine"
         style="width: 100%; height: 500px;"
+        (rowClicked)="onRowClicked($event)"
       ></ag-grid-angular>
     }
   </div>
@@ -62,7 +72,8 @@
     <br>
     <br>
     Download your collection from bgg as csv, then upload it here.
-    It can be done from here, click <span class="bold" (click)="addUserName()">here</span> and input
+    It can be done from here, click <span (click)="addUserName()" class="bold">here</span> and
+    input
     your user name.
   </div>
 

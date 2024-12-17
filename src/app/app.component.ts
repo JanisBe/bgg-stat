@@ -2,9 +2,10 @@ import {Component, ViewChild} from '@angular/core';
 import * as Papa from 'papaparse';
 import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
+import {Chart} from 'highcharts';
 import {HighchartsChartModule} from "highcharts-angular";
 import {FormsModule} from "@angular/forms";
-import {ColDef} from "ag-grid-community";
+import {ColDef, RowClickedEvent} from "ag-grid-community";
 import {AgGridAngular} from "ag-grid-angular";
 import {gridOptions, tableConfig} from "./tableConfig";
 import {HttpClient} from "@angular/common/http";
@@ -23,6 +24,8 @@ const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url'];
   standalone: true,
 })
 export class AppComponent {
+  chart: Chart | undefined;
+
   constructor(private http: HttpClient) {
   }
 
@@ -49,7 +52,6 @@ export class AppComponent {
       useHTML: true,
       formatter: function () {
         const point = this as Highcharts.Point;
-        // console.log(point);
         let tooltip = `Name: <b>${point.name}</b><br>`;
         tooltip += `Rating: <b>${point.y}</b><br>`;
         tooltip += `Weight: <b>${point.x}</b><br>`;
@@ -82,8 +84,17 @@ export class AppComponent {
     plotOptions: {
       scatter: {
         marker: {
-          radius: 2.5
+          radius: 2.5,
+          states: {
+            select: {
+              fillColor: 'red',
+              lineColor: 'black',
+              lineWidth: 2,
+              radius: 6
+            }
+          }
         },
+        allowPointSelect: true
       },
       series: {
         cursor: 'pointer',
@@ -134,8 +145,49 @@ export class AppComponent {
     }
   }
 
-  private initializeChart(): void {
-    Highcharts.chart('hcContainer', this.chartOptions);
+  extractData(): DataPoint[][] {
+    const data = this.results;
+    this.counter = 0;
+    const dataPoints: DataPoint[] = [];
+    const expansion: DataPoint[] = [];
+    data.forEach((row) => {
+      const average = +parseFloat(row['average']).toFixed(2);
+      const avgWeight = +parseFloat(row['avgweight']).toFixed(2);
+      const objectName = row['objectname'];
+      const objectid = row['objectid'];
+
+      if (!isNaN(average) && !isNaN(avgWeight)) {
+        const dataPoint: DataPoint = {
+          x: avgWeight,
+          y: average,
+          objectname: objectName,
+          objectid: objectid
+        };
+
+        Object.keys(row).forEach(key => {
+          if (tableConfig[key]) {
+            dataPoint[key] = row[key];
+          }
+        });
+
+        if (this.excludeExpansions) {
+          if (row['itemtype'] === 'standalone') {
+            dataPoints.push(dataPoint);
+            this.counter++;
+          }
+        } else {
+          if (row['itemtype'] === 'standalone') {
+            dataPoints.push(dataPoint);
+            this.counter++;
+          }
+          if (row['itemtype'] === 'expansion') {
+            expansion.push(dataPoint);
+            this.counter++;
+          }
+        }
+      }
+    });
+    return [dataPoints, expansion];
   }
 
   private processTableData(result: ParseResult<DataPoint>) {
@@ -182,49 +234,38 @@ export class AppComponent {
     }
   }
 
-  extractData(): DataPoint[][] {
-    const data = this.results;
-    this.counter = 0;
-    const dataPoints: DataPoint[] = [];
-    const expansion: DataPoint[] = [];
-    data.forEach((row) => {
-      const average = +parseFloat(row['average']).toFixed(2);
-      const avgWeight = +parseFloat(row['avgweight']).toFixed(2);
-      const objectName = row['objectname'];
-      const objectid = row['objectid'];
+  onUpdate(entry: { key: string, visible: boolean }) {
+    if (this.visibleColumns.has(entry.key) && !entry.visible) {
+      this.visibleColumns.delete(entry.key);
+      this.agGrid.api.setColumnsVisible([entry.key], false);
+    } else if (entry.visible) {
+      this.visibleColumns.add(entry.key);
+      this.agGrid.api.setColumnsVisible([entry.key], true);
+    }
 
-      if (!isNaN(average) && !isNaN(avgWeight)) {
-        const dataPoint: DataPoint = {
-          x: avgWeight,
-          y: average,
-          objectname: objectName,
-          objectid
-        };
+    this.chartOptions = {
+      ...this.chartOptions,
+      tooltip: {
+        ...this.chartOptions.tooltip,
+        formatter: function () {
+          const point = this as Highcharts.Point;
+          let tooltip = `Name: <b>${point.name}</b><br>`;
+          tooltip += `Rating: <b>${point.y}</b><br>`;
+          tooltip += `Weight: <b>${point.x}</b><br>`;
 
-        Object.keys(row).forEach(key => {
-          if (tableConfig[key]) {
-            dataPoint[key] = row[key];
+          const options = point.options as any;
+          for (let tooltipName of Object.keys(options)) {
+            if (!!options[tooltipName] && !NOT_DISPLAYED.includes(tooltipName)) {
+              tooltip += `${tooltipName}: <b>${options[tooltipName]}</b><br>`;
+            }
           }
-        });
 
-        if (this.excludeExpansions) {
-          if (row['itemtype'] === 'standalone') {
-            dataPoints.push(dataPoint);
-            this.counter++;
-          }
-        } else {
-          if (row['itemtype'] === 'standalone') {
-            dataPoints.push(dataPoint);
-            this.counter++;
-          }
-          if (row['itemtype'] === 'expansion') {
-            expansion.push(dataPoint);
-            this.counter++;
-          }
+          return tooltip;
         }
       }
-    });
-    return [dataPoints, expansion];
+    };
+
+    this.chart = Highcharts.chart("hcContainer", this.chartOptions);
   }
 
 
@@ -285,45 +326,29 @@ export class AppComponent {
     this.isExpanded = !this.isExpanded;
   }
 
-  onUpdate(entry: { key: string, visible: boolean }) {
-    if (this.visibleColumns.has(entry.key) && !entry.visible) {
-      this.visibleColumns.delete(entry.key);
-      this.agGrid.api.setColumnsVisible([entry.key], false);
-    } else if (entry.visible) {
-      this.visibleColumns.add(entry.key);
-      this.agGrid.api.setColumnsVisible([entry.key], true);
-    }
-
-    this.chartOptions = {
-      ...this.chartOptions,
-      tooltip: {
-        ...this.chartOptions.tooltip,
-        formatter: function () {
-          const point = this as Highcharts.Point;
-          let tooltip = `Name: <b>${point.name}</b><br>`;
-          tooltip += `Rating: <b>${point.y}</b><br>`;
-          tooltip += `Weight: <b>${point.x}</b><br>`;
-
-          const options = point.options as any;
-          for (let tooltipName of Object.keys(options)) {
-            if (!!options[tooltipName] && !NOT_DISPLAYED.includes(tooltipName)) {
-              tooltip += `${tooltipName}: <b>${options[tooltipName]}</b><br>`;
-            }
-          }
-
-          return tooltip;
-        }
-      }
-    };
-
-    Highcharts.chart("hcContainer", this.chartOptions);
-  }
-
   onUpdateExcludeExpansions(excludeExpansions: boolean) {
     this.excludeExpansions = excludeExpansions;
     const dataPoints = this.extractData();
     this.updateChart(dataPoints[0], dataPoints[1]);
-    Highcharts.chart("hcContainer", this.chartOptions);
+    this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+  }
+
+  onRowClicked(event: RowClickedEvent<any>) {
+    switch (event.data.itemtype) {
+      case 'standalone': {
+        // @ts-ignore
+        const point: Highcharts.Point[] = this.chart?.series[0].data.filter(p => p.objectid === event.data.objectid);
+        point[0].select(true, false);
+        break;
+      }
+      case 'expansion': {
+        // @ts-ignore
+        const pointExpansion: Highcharts.Point[] = this.chart?.series[1].data.filter(p => p.objectid === event.data.objectid);
+        pointExpansion[0].select(true, false);
+        break;
+      }
+    }
+
   }
 
   private validateCsv(file: File): Promise<boolean> {
@@ -355,6 +380,10 @@ export class AppComponent {
     this.http.get(filePath, {responseType: 'text'}).subscribe((data) => {
       this.pareseCSV(data);
     });
+  }
+
+  private initializeChart(): void {
+    this.chart = Highcharts.chart('hcContainer', this.chartOptions);
   }
 }
 
