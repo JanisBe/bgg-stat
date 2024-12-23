@@ -38,7 +38,7 @@ export class AppComponent {
   visibleColumns: Set<string> = new Set();
   @ViewChild('agGrid') agGrid!: AgGridAngular;
   protected readonly gridOptions = gridOptions;
-  excludeExpansions = false;
+  excludeExpansions = true;
   private results: DataPoint[] = [];
 
 
