@@ -152,12 +152,14 @@ export class AppComponent {
     const dataPoints: DataPoint[] = [];
     const expansion: DataPoint[] = [];
     data.forEach((row) => {
-      const average = +parseFloat(row['average']).toFixed(2);
-      const avgWeight = +parseFloat(row['avgweight']).toFixed(2);
+      const average = +parseFloat(row['average']).toFixed(3);
+      const avgWeight = +parseFloat(row['avgweight']).toFixed(3);
       const objectName = row['objectname'];
       const objectid = row['objectid'];
-
-      if (!isNaN(average) && !isNaN(avgWeight)) {
+      if (avgWeight==0) {
+        console.log(row);
+      }
+      if (!isNaN(average) && !isNaN(avgWeight) && avgWeight!==0) {
         const dataPoint: DataPoint = {
           x: avgWeight,
           y: average,
@@ -186,6 +188,9 @@ export class AppComponent {
             this.counter++;
           }
         }
+      }
+      else {
+        console.log(data);
       }
     });
     return [dataPoints, expansion];
@@ -219,7 +224,6 @@ export class AppComponent {
         key.lockPinned = true;
       }
     })
-    console.log(collection);
     return map;
   }
 
