@@ -1,7 +1,12 @@
 import {GridOptions} from "ag-grid-community";
 
 export const tableConfig: TooltipName = {
-  "objectname": {"visible": true },
+  "objectname": {"visible": true},
+  "average": {"visible": true, "type": "n"},
+  "avgweight": {"visible": true, "type": "n"},
+  "rank": {"visible": true, "type": "n"},
+  "objecttype": {"visible": false},
+  "bggbestplayers": {"visible": true},
   "rating": {"visible": true, "type": "n"},
   "numplays": {"visible": false, "type": "n"},
   "weight": {"visible": false, "type": "n"},
@@ -21,11 +26,7 @@ export const tableConfig: TooltipName = {
   "wantpartslist": {"visible": false},
   "collid": {"visible": false, "type": "n"},
   "baverage": {"visible": true, "type": "n"},
-  "average": {"visible": true, "type": "n"},
-  "avgweight": {"visible": true, "type": "n"},
-  "rank": {"visible": true, "type": "n"},
   "numowned": {"visible": false, "type": "n"},
-  "objecttype": {"visible": false},
   "originalname": {"visible": true},
   "minplayers": {"visible": true, "type": "n"},
   "maxplayers": {"visible": true, "type": "n"},
@@ -34,7 +35,6 @@ export const tableConfig: TooltipName = {
   "minplaytime": {"visible": true, "type": "n"},
   "yearpublished": {"visible": true, "type": "n"},
   "bggrecplayers": {"visible": true},
-  "bggbestplayers": {"visible": true},
   "bggrecagerange": {"visible": true, "type": "n"},
   "bgglanguagedependence": {"visible": false},
   "publisherid": {"visible": false},
@@ -74,31 +74,6 @@ export const gridOptions: GridOptions = {
     ]
   },
 };
-
-// export const desiredKeys = [
-//   'objectid',
-//   'originalname',
-//   'bggrecplayers',
-//   'baverage',
-//   'bggrecagerange',
-//   'playingtime'
-// ];
-//
-// function createPartialObject(data: TooltipName[], keys: string[]) {
-//   return keys
-//   .map(key => {
-//     const obj = data.find(item => item.hasOwnProperty(key));
-//     return obj ? {[key]: obj[key]} : undefined;
-//   })
-//   .filter(item => item !== undefined);
-// }
-//
-// export function getValueForKey(data: TooltipName[], key: string) {
-//   const foundObject = data.find(item => item.hasOwnProperty(key));
-//   return foundObject ? foundObject[key] : undefined;
-// }
-//
-// export const visibleRows: TooltipName[] = createPartialObject(tableConfig, desiredKeys);
 
 export type TooltipName = {
   [key: string]: {

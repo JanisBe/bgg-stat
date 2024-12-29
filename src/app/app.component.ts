@@ -204,7 +204,7 @@ export class AppComponent {
   }
 
   private generateColumns(collection: any[]) {
-    return Object.keys(collection || {}).map(key => ({
+    let map = Object.keys(collection || {}).map(key => ({
       field: key,
       headerName: key.charAt(0).toUpperCase() + key.slice(1),
       filter: true,
@@ -213,6 +213,14 @@ export class AppComponent {
       floatingFilter: true,
       cellDataType: this.calculateCellDataType(key),
     } as ColDef));
+    map.map(key => {
+      if (key.field === 'objectname') {
+        key.pinned = 'left';
+        key.lockPinned = true;
+      }
+    })
+    console.log(collection);
+    return map;
   }
 
   private calculateCellDataType(key: string): string {
