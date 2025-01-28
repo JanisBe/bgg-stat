@@ -5,11 +5,22 @@ import * as Highcharts from 'highcharts';
 import {Chart} from 'highcharts';
 import {HighchartsChartModule} from "highcharts-angular";
 import {FormsModule} from "@angular/forms";
-import {ColDef, RowClickedEvent} from "ag-grid-community";
+import {
+  AllCommunityModule,
+  ColDef,
+  ModuleRegistry,
+  provideGlobalGridOptions,
+  RowClassParams,
+  RowClickedEvent,
+  RowStyle
+} from "ag-grid-community";
 import {AgGridAngular} from "ag-grid-angular";
 import {gridOptions, tableConfig} from "./tableConfig";
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../environments/environment";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+provideGlobalGridOptions({theme: "legacy"});
 
 const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url'];
 
@@ -118,13 +129,20 @@ export class AppComponent {
     visible: tableConfig[key].visible
   }));
 
+  rowStyle: ((params: RowClassParams<any>) => (RowStyle | undefined)) | undefined = (params) => {
+    if (params.data.itemtype == 'expansion') {
+      return {background: '#c8c8c8'};
+    }
+    return {background: '#ececec'};
+  };
+
   async onFileUpload(event: any) {
     const file = event.target.files[0];
     await this.pareseCSV(file)
   }
 
   async pareseCSV(file: any) {
-    if (file && await this.validateCsv(file)) {
+    if (file && (await this.validateCsv(file))) {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
@@ -156,10 +174,7 @@ export class AppComponent {
       const avgWeight = +parseFloat(row['avgweight']).toFixed(3);
       const objectName = row['objectname'];
       const objectid = row['objectid'];
-      if (avgWeight==0) {
-        console.log(row);
-      }
-      if (!isNaN(average) && !isNaN(avgWeight) && avgWeight!==0) {
+      if (!isNaN(average) && !isNaN(avgWeight) && avgWeight !== 0) {
         const dataPoint: DataPoint = {
           x: avgWeight,
           y: average,
@@ -188,9 +203,6 @@ export class AppComponent {
             this.counter++;
           }
         }
-      }
-      else {
-        console.log(data);
       }
     });
     return [dataPoints, expansion];
@@ -347,6 +359,7 @@ export class AppComponent {
   }
 
   onRowClicked(event: RowClickedEvent<any>) {
+    console.log(((event.event) as PointerEvent).button);
     switch (event.data.itemtype) {
       case 'standalone': {
         // @ts-ignore

@@ -53,9 +53,11 @@
         [rowData]="rowData"
         [columnDefs]="columnDefs"
         [gridOptions]="gridOptions"
+        [getRowStyle]="rowStyle"
         class="ag-theme-alpine"
         style="width: 95%; height: 500px; margin: 10px"
         (rowClicked)="onRowClicked($event)"
+        [columnHoverHighlight]="true"
       ></ag-grid-angular>
     }
   </div>
