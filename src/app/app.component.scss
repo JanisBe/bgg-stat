@@ -109,3 +109,17 @@
 .graph {
   margin: 20px;
 }
+
+.ag-header-cell:hover .ag-header-cell-text {
+  position: absolute;
+  background-color: white;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  z-index: 10;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  max-width: 200px; /* Adjust as needed */
+}

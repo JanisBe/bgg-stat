@@ -19,6 +19,7 @@ import {AgGridAngular} from "ag-grid-angular";
 import {gridOptions, tableConfig} from "./tableConfig";
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../environments/environment";
+import {TooltipHeaderComponent} from "./header-tooltip.component";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 provideGlobalGridOptions({theme: "legacy"});
@@ -419,7 +420,8 @@ export class AppComponent {
     let columnNames = Object.keys(collection || {}).map(key => ({
       field: key,
       headerName: this.generateName(key),
-      // headerName: key.charAt(0).toUpperCase() + key.slice(1),
+      headerTooltip: this.generateName(key),
+      headerComponent: TooltipHeaderComponent,
       filter: true,
       hide: !this.visibleColumns.has(key),
       suppressColumnsToolPanel: true,
@@ -442,7 +444,9 @@ export class AppComponent {
 
 interface DataPoint {
   bggrecagerange?: number | string;
+
   [key: string]: any;
+
   x: number;
   y: number;
   objectname: string;
