@@ -24,7 +24,7 @@
                  (mouseleave)="isExpanded=false">
               @for (option of checkboxOptions; track option) {
                 <div class="option-item">
-                  <label for="{{ option.key }}">{{ option.key }}</label>
+                  <label for="{{ option.key }}">{{ option.translation || option.key }}</label>
                   <input type="checkbox" (change)="onUpdate(option)"
                          [checked]="option.visible"
                          [(ngModel)]="option.visible"/>

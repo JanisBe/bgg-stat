@@ -1,4 +1,4 @@
-import {Component, Inject, LOCALE_ID, ViewChild} from '@angular/core';
+import {Component, ViewChild} from '@angular/core';
 import * as Papa from 'papaparse';
 import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
@@ -23,7 +23,7 @@ import {environment} from "../environments/environment";
 ModuleRegistry.registerModules([AllCommunityModule]);
 provideGlobalGridOptions({theme: "legacy"});
 
-const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url'];
+const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url', 'name', 'Nazwa'];
 
 @Component({
   selector: 'app-root',
@@ -58,7 +58,6 @@ export class AppComponent {
             tooltip += `${tooltipName}: <b>${point[tooltipName]}</b><br>`;
           }
         }
-
         return tooltip;
       }
     },
@@ -107,7 +106,6 @@ export class AppComponent {
       },
     },
   };
-  private locale: string;
   private gridApi!: GridApi;
   counter = 0;
   isExpanded: boolean = false;
@@ -123,17 +121,23 @@ export class AppComponent {
 
   private readonly link = "https://boardgamegeek.com/boardgame/";
 
-  constructor(private http: HttpClient, @Inject(LOCALE_ID) private localeId: string) {
-    this.locale = this.localeId;
-    console.log(localeId)
-    console.log(navigator.language);
-  }
   checkboxOptions = Object.keys(tableConfig).map(key => ({
     key,
-    visible: tableConfig[key].visible
+    visible: tableConfig[key].visible,
+    translation: this.getTranslation(key)
   }));
 
-  rowStyle: ((params: RowClassParams<any>) => (RowStyle | undefined)) | undefined = (params) => {
+  constructor(private http: HttpClient) {
+  }
+
+  getTranslation(key: string): string {
+    const browserLang = navigator.language || 'en';
+    const locale = browserLang.startsWith('pl') ? 'Pl' : 'En';
+
+    return tableConfig[key]?.[`translation${locale}`] || key;
+  }
+
+  rowStyle: ((params: RowClassParams) => (RowStyle | undefined)) | undefined = (params) => {
     if (params.data.itemtype == 'expansion') {
       return {background: '#c8c8c8'};
     }
@@ -224,7 +228,7 @@ export class AppComponent {
     this.columnDefs[0].pinned = "left";
   }
 
-  onRowClicked(event: RowClickedEvent<any>) {
+  onRowClicked(event: RowClickedEvent) {
     switch (event.data.itemtype) {
       case 'standalone': {
         // @ts-ignore
@@ -334,24 +338,8 @@ export class AppComponent {
     };
   }
 
-  private processPoints(dataPoints: DataPoint[]) {
-    return dataPoints.map((point) => {
-      const additionalProps = {};
-      Object.keys(tableConfig).forEach(key => {
-        if (tableConfig[key].visible) {
-          // @ts-ignore
-          additionalProps[key] = point[key];
-        }
-      });
-
-      return {
-        name: point.objectname,
-        x: point.x,
-        y: point.y,
-        url: this.link + point.objectid,
-        ...additionalProps
-      };
-    });
+  onGridReady(params: { api: GridApi; }) {
+    this.gridApi = params.api;
   }
 
   addUserName() {
@@ -372,8 +360,24 @@ export class AppComponent {
     this.chart = Highcharts.chart("hcContainer", this.chartOptions);
   }
 
-  onGridReady(params: { api: GridApi<any>; }) {
-    this.gridApi = params.api;
+  private processPoints(dataPoints: DataPoint[]) {
+    return dataPoints.map((point) => {
+      const additionalProps: StringKeyValueMap = {};
+      Object.keys(tableConfig).forEach(key => {
+        if (tableConfig[key].visible && !(key in additionalProps)) {
+          const translatedKey = this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
+          additionalProps[translatedKey] = point[key];
+        }
+      });
+
+      return {
+        name: point.objectname,
+        x: point.x,
+        y: point.y,
+        url: this.link + point.objectid,
+        ...additionalProps
+      };
+    });
   }
 
   private validateCsv(file: File): Promise<boolean> {
@@ -432,21 +436,20 @@ export class AppComponent {
   }
 
   private generateName(key: string) {
-    const entry = tableConfig[key];
-    if (entry.translation) {
-      return entry.translation;
-    }
-    return key.charAt(0).toUpperCase() + key.slice(1);
+    return this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
   }
 }
+
 interface DataPoint {
   bggrecagerange?: number | string;
-
   [key: string]: any;
-
   x: number;
   y: number;
   objectname: string;
   objectid?: string;
   url?: string;
 }
+
+type StringKeyValueMap = {
+  [key: string]: string;
+};
