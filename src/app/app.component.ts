@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, Inject, LOCALE_ID, ViewChild} from '@angular/core';
 import * as Papa from 'papaparse';
 import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
@@ -8,6 +8,7 @@ import {FormsModule} from "@angular/forms";
 import {
   AllCommunityModule,
   ColDef,
+  GridApi,
   ModuleRegistry,
   provideGlobalGridOptions,
   RowClassParams,
@@ -37,29 +38,11 @@ const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url'];
 })
 export class AppComponent {
   chart: Chart | undefined;
-
-  constructor(private http: HttpClient) {
-  }
-
-  counter = 0;
-  isExpanded: boolean = false;
-  dataLoaded: boolean = false;
-  rowData: any[] = [];
-  columnDefs: ColDef[] = [];
-  visibleColumns: Set<string> = new Set();
-  @ViewChild('agGrid') agGrid!: AgGridAngular;
-  protected readonly gridOptions = gridOptions;
-  excludeExpansions = true;
-  private results: DataPoint[] = [];
-
-
-  private readonly link = "https://boardgamegeek.com/boardgame/";
-
   chartOptions: Highcharts.Options = {
     chart: {type: 'scatter', height: 800},
     title: {text: 'Ocena na BGG vs Trudność'},
-    xAxis: {title: {text: 'Ocena BGG'}},
-    yAxis: {title: {text: 'Ciężar (trudność)'}},
+    xAxis: {title: {text: 'Ciężar (trudność)'}},
+    yAxis: {title: {text: 'Ocena BGG'}},
     tooltip: {
       useHTML: true,
       formatter: function () {
@@ -124,6 +107,27 @@ export class AppComponent {
       },
     },
   };
+  private locale: string;
+  private gridApi!: GridApi;
+  counter = 0;
+  isExpanded: boolean = false;
+  dataLoaded: boolean = false;
+  rowData: any[] = [];
+  columnDefs: ColDef[] = [];
+  visibleColumns: Set<string> = new Set();
+  @ViewChild('agGrid') agGrid!: AgGridAngular;
+  protected readonly gridOptions = gridOptions;
+  excludeExpansions = true;
+  private results: DataPoint[] = [];
+
+
+  private readonly link = "https://boardgamegeek.com/boardgame/";
+
+  constructor(private http: HttpClient, @Inject(LOCALE_ID) private localeId: string) {
+    this.locale = this.localeId;
+    console.log(localeId)
+    console.log(navigator.language);
+  }
   checkboxOptions = Object.keys(tableConfig).map(key => ({
     key,
     visible: tableConfig[key].visible
@@ -164,8 +168,8 @@ export class AppComponent {
     }
   }
 
-  extractData(): DataPoint[][] {
-    const data = this.results;
+  extractData(optionalData?: DataPoint[]): DataPoint[][] {
+    const data = optionalData || this.results;
     this.counter = 0;
     const dataPoints: DataPoint[] = [];
     const expansion: DataPoint[] = [];
@@ -220,23 +224,33 @@ export class AppComponent {
     this.columnDefs[0].pinned = "left";
   }
 
-  private generateColumns(collection: any[]) {
-    let map = Object.keys(collection || {}).map(key => ({
-      field: key,
-      headerName: key.charAt(0).toUpperCase() + key.slice(1),
-      filter: true,
-      hide: !this.visibleColumns.has(key),
-      suppressColumnsToolPanel: true,
-      floatingFilter: true,
-      cellDataType: this.calculateCellDataType(key),
-    } as ColDef));
-    map.map(key => {
-      if (key.field === 'objectname') {
-        key.pinned = 'left';
-        key.lockPinned = true;
+  onRowClicked(event: RowClickedEvent<any>) {
+    switch (event.data.itemtype) {
+      case 'standalone': {
+        // @ts-ignore
+        const point: Highcharts.Point[] = this.chart?.series[0].data.filter(p => p.objectid === event.data.objectid);
+        point[0]?.select(true, false);
+        break;
       }
-    })
-    return map;
+      case 'expansion': {
+        // @ts-ignore
+        const pointExpansion: Highcharts.Point[] = this.chart?.series[1].data.filter(p => p.objectid === event.data.objectid);
+        pointExpansion[0]?.select(true, false);
+        break;
+      }
+    }
+
+  }
+
+  onFilterChanged() {
+    const filteredData: any[] = [];
+    this.gridApi.forEachNodeAfterFilter(node => {
+      filteredData.push(node.data);
+    });
+    console.log(filteredData);
+    const dataPoints = this.extractData(filteredData);
+    this.updateChart(dataPoints[0], dataPoints[1]);
+    this.chart = Highcharts.chart("hcContainer", this.chartOptions);
   }
 
   private calculateCellDataType(key: string): string {
@@ -358,23 +372,8 @@ export class AppComponent {
     this.chart = Highcharts.chart("hcContainer", this.chartOptions);
   }
 
-  onRowClicked(event: RowClickedEvent<any>) {
-    console.log(((event.event) as PointerEvent).button);
-    switch (event.data.itemtype) {
-      case 'standalone': {
-        // @ts-ignore
-        const point: Highcharts.Point[] = this.chart?.series[0].data.filter(p => p.objectid === event.data.objectid);
-        point[0].select(true, false);
-        break;
-      }
-      case 'expansion': {
-        // @ts-ignore
-        const pointExpansion: Highcharts.Point[] = this.chart?.series[1].data.filter(p => p.objectid === event.data.objectid);
-        pointExpansion[0].select(true, false);
-        break;
-      }
-    }
-
+  onGridReady(params: { api: GridApi<any>; }) {
+    this.gridApi = params.api;
   }
 
   private validateCsv(file: File): Promise<boolean> {
@@ -411,8 +410,35 @@ export class AppComponent {
   private initializeChart(): void {
     this.chart = Highcharts.chart('hcContainer', this.chartOptions);
   }
-}
 
+  private generateColumns(collection: any[]) {
+    let columnNames = Object.keys(collection || {}).map(key => ({
+      field: key,
+      headerName: this.generateName(key),
+      // headerName: key.charAt(0).toUpperCase() + key.slice(1),
+      filter: true,
+      hide: !this.visibleColumns.has(key),
+      suppressColumnsToolPanel: true,
+      floatingFilter: true,
+      cellDataType: this.calculateCellDataType(key),
+    } as ColDef));
+    columnNames.map(key => {
+      if (key.field === 'objectname') {
+        key.pinned = 'left';
+        key.lockPinned = true;
+      }
+    })
+    return columnNames;
+  }
+
+  private generateName(key: string) {
+    const entry = tableConfig[key];
+    if (entry.translation) {
+      return entry.translation;
+    }
+    return key.charAt(0).toUpperCase() + key.slice(1);
+  }
+}
 interface DataPoint {
   bggrecagerange?: number | string;
 
