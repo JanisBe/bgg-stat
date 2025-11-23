@@ -63,6 +63,9 @@ export const tableConfig: TooltipName = {
 
 
 export const gridOptions: GridOptions = {
+  defaultColDef: {
+    sortable: true
+  },
   autoSizeStrategy: {
     type: 'fitGridWidth',
     defaultMinWidth: 100,

@@ -1,10 +1,10 @@
-import {Component, ViewChild} from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import * as Papa from 'papaparse';
-import {ParseResult} from 'papaparse';
+import { ParseResult } from 'papaparse';
 import * as Highcharts from 'highcharts';
-import {Chart} from 'highcharts';
-import {HighchartsChartModule} from "highcharts-angular";
-import {FormsModule} from "@angular/forms";
+import { Chart } from 'highcharts';
+import { HighchartsChartModule } from "highcharts-angular";
+import { FormsModule } from "@angular/forms";
 import {
   AllCommunityModule,
   ColDef,
@@ -15,18 +15,16 @@ import {
   RowClickedEvent,
   RowStyle
 } from "ag-grid-community";
-import {AgGridAngular} from "ag-grid-angular";
-import {gridOptions, tableConfig} from "./tableConfig";
-import {HttpClient} from "@angular/common/http";
-import {environment} from "../environments/environment";
-import {TooltipHeaderComponent} from "./header-tooltip.component";
+import { AgGridAngular } from "ag-grid-angular";
+import { gridOptions, tableConfig } from "./tableConfig";
+import { HttpClient } from "@angular/common/http";
+import { environment } from "../environments/environment";
+import { TooltipHeaderComponent } from "./header-tooltip.component";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
-provideGlobalGridOptions({theme: "legacy"});
+provideGlobalGridOptions({ theme: "legacy" });
 
-const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url', 'name', 'Nazwa'];
-
-@Component({
+const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url', 'name', 'Nazwa']; @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
@@ -40,10 +38,10 @@ const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url', 'name', 'Nazwa'];
 export class AppComponent {
   chart: Chart | undefined;
   chartOptions: Highcharts.Options = {
-    chart: {type: 'scatter', height: 800},
-    title: {text: 'Ocena na BGG vs Trudność'},
-    xAxis: {title: {text: 'Ciężar (trudność)'}},
-    yAxis: {title: {text: 'Ocena BGG'}},
+    chart: { type: 'scatter', height: 800 },
+    title: { text: 'Ocena na BGG vs Trudność' },
+    xAxis: { title: { text: 'Ciężar (trudność)' } },
+    yAxis: { title: { text: 'Ocena BGG' } },
     tooltip: {
       useHTML: true,
       formatter: function () {
@@ -140,9 +138,9 @@ export class AppComponent {
 
   rowStyle: ((params: RowClassParams) => (RowStyle | undefined)) | undefined = (params) => {
     if (params.data.itemtype == 'expansion') {
-      return {background: '#c8c8c8'};
+      return { background: '#c8c8c8' };
     }
-    return {background: '#ececec'};
+    return { background: '#ececec' };
   };
 
   async onFileUpload(event: any) {
@@ -407,7 +405,7 @@ export class AppComponent {
 
   onLoadMyExample() {
     const filePath = environment.filePath;
-    this.http.get(filePath, {responseType: 'text'}).subscribe((data) => {
+    this.http.get(filePath, { responseType: 'text' }).subscribe((data) => {
       this.pareseCSV(data);
     });
   }
@@ -421,8 +419,8 @@ export class AppComponent {
       field: key,
       headerName: this.generateName(key),
       headerTooltip: this.generateName(key),
-      headerComponent: TooltipHeaderComponent,
       filter: true,
+      sortable: true,
       hide: !this.visibleColumns.has(key),
       suppressColumnsToolPanel: true,
       floatingFilter: true,
