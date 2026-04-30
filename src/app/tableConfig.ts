@@ -81,7 +81,7 @@ export const gridOptions: GridOptions = {
 export type TooltipName = {
   [key: string]: {
     visible: boolean;
-    type?: string;
+    type?: string; // n - number, b - boolean, s - string
     translationPl?: string;
     translationEn?: string;
   };

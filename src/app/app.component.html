@@ -1,66 +1,64 @@
 <div class="container">
+  @if (fileDate) {
+    <div class="file-date">{{ fileDate }}</div>
+  }
   <div>
     <h1>BGG collection</h1>
     @if (counter != 0) {
-      Wczytano {{ counter }} gier
+      Wyświetlono {{ counter }} gier
     }
-    <div>
+    <div class="controls-row">
       <div class="upload">
-        <input (change)="onFileUpload($event)" accept="text/csv" type="file"/> lub <p
-        (click)="onLoadMyExample()" class="myCSV bold">użyj mojego CSV</p>
+        <input (change)="onFileUpload($event)" accept="text/csv" type="file"/> lub <p (click)="onLoadMyExample()"
+                                                                                      class="myCSV bold">użyj mojego
+        CSV</p>
       </div>
       @if (dataLoaded) {
 
+        <div class="filter-bar">
+          <div class="filter-group">
+            <strong>Filtruj / Filter:</strong>
+            <label class="filter-item">
+              <input (change)="onToggleFilters()" [(ngModel)]="showStandalone" type="checkbox"/>
+              Gry podstawowe / Base games
+            </label>
+            <label class="filter-item">
+              <input (change)="onToggleFilters()" [(ngModel)]="showExpansions" type="checkbox"/>
+              Dodatki / Expansions
+            </label>
+          </div>
+        </div>
         <div class="options" style="position: relative;">
           <div (click)="toggleOptions()" class="tooltip">Opcje / Options
             @if (!dataLoaded) {
-              <span
-                class="tooltiptext">Najpierw załaduj plik csv<br>First load csv file</span>
+              <span class="tooltiptext">Najpierw załaduj plik csv<br>First load csv file</span>
             }
           </div>
 
           @if (isExpanded) {
-            <div id="options-container"
-                 (mouseleave)="isExpanded=false">
+            <div (mouseleave)="isExpanded=false" id="options-container">
               @for (option of checkboxOptions; track option) {
                 <div class="option-item">
                   <label for="{{ option.key }}">{{ option.translation || option.key }}</label>
-                  <input type="checkbox" (change)="onUpdate(option)"
-                         [checked]="option.visible"
+                  <input (change)="onUpdate(option)" [checked]="option.visible" type="checkbox"
                          [(ngModel)]="option.visible"/>
                 </div>
               }
             </div>
           }
         </div>
-
-        <div class="expansions">
-          <label for="excludeExpansions">Exclude Expansions</label>
-          <input (change)="onUpdateExcludeExpansions(excludeExpansions)"
-                 type="checkbox"
-                 id="excludeExpansions"
-                 [(ngModel)]="excludeExpansions"/>
-        </div>
-
       }
     </div>
     <div class="graph" id="hcContainer"></div>
   </div>
   <div>
     @if (dataLoaded) {
-      <ag-grid-angular
-        #agGrid
-        [rowData]="rowData"
-        [columnDefs]="columnDefs"
-        [gridOptions]="gridOptions"
-        [getRowStyle]="rowStyle"
-        class="ag-theme-alpine"
-        style="width: 95%; height: 500px; margin: 10px"
-        (rowClicked)="onRowClicked($event)"
-        (gridReady)="onGridReady($event)"
-        (filterChanged)="onFilterChanged()"
-        [columnHoverHighlight]="true"
-      ></ag-grid-angular>
+      <ag-grid-angular #agGrid (filterChanged)="onFilterChanged()" (gridReady)="onGridReady($event)"
+                       (rowClicked)="onRowClicked($event)"
+                       [columnDefs]="columnDefs" [columnHoverHighlight]="true" [getRowStyle]="rowStyle"
+                       [gridOptions]="gridOptions" [rowData]="rowData"
+                       class="ag-theme-alpine"
+                       style="width: 95%; height: 500px; margin: 10px"></ag-grid-angular>
     }
   </div>
   <div>
@@ -93,4 +91,3 @@
   </div>
 
 </div>
-

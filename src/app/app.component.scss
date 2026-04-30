@@ -8,42 +8,65 @@
 .container {
   margin: 10px;
   font-family: "Unica One", arial, helvetica, sans-serif, serif;
-}
-
-.upload {
-  float: left;
-  border: 1px solid darkcyan;
-  padding: 5px;
-  border-radius: 5px;
-}
-
-.expansions {
-  border: 1px solid darkcyan;
-  padding: 5px;
-  border-radius: 5px;
-  display: inline;
-  float: right;
-  margin-right: 10px;
-}
-
-.options {
-  cursor: pointer;
-  float: right;
-  border: 1px solid darkcyan;
-  padding: 5px;
-  border-radius: 5px;
   position: relative;
 }
 
-#options-container {
+.file-date {
   position: absolute;
-  top: 100%; /* This positions the options container just below the "Options" div */
-  right: 0; /* Aligns the options container with the right edge of the "Options" div */
-  background-color: white; /* White background for the options container */
-  z-index: 10; /* Ensures the options container appears above other content */
-  padding: 10px;
-  width: 250px;
-  border: 1px solid #ccc; /* Optional border for styling */
+  top: 5px;
+  right: 10px;
+  font-size: 8px;
+  color: gray;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+
+  /* Shared style for all control boxes */
+  .upload, .filter-bar, .options {
+    display: flex;
+    align-items: center;
+    border: 1px solid darkcyan;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    height: 40px; /* Force identical height */
+    box-sizing: border-box;
+  }
+
+  .upload {
+    gap: 10px;
+  }
+
+  .filter-bar {
+    gap: 15px;
+    flex-grow: 1;
+    justify-content: center;
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      user-select: none;
+    }
+  }
+
+  .options {
+    cursor: pointer;
+    position: relative;
+    justify-content: center;
+  }
 }
 
 .option-item {

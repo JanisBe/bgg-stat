@@ -1,10 +1,9 @@
-import { Component, ViewChild } from '@angular/core';
+import {Component, ViewChild} from '@angular/core';
 import * as Papa from 'papaparse';
-import { ParseResult } from 'papaparse';
+import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
-import { Chart } from 'highcharts';
-import { HighchartsChartModule } from "highcharts-angular";
-import { FormsModule } from "@angular/forms";
+import {Chart} from 'highcharts';
+import {FormsModule} from "@angular/forms";
 import {
   AllCommunityModule,
   ColDef,
@@ -15,21 +14,21 @@ import {
   RowClickedEvent,
   RowStyle
 } from "ag-grid-community";
-import { AgGridAngular } from "ag-grid-angular";
-import { gridOptions, tableConfig } from "./tableConfig";
-import { HttpClient } from "@angular/common/http";
-import { environment } from "../environments/environment";
-import { TooltipHeaderComponent } from "./header-tooltip.component";
+import {AgGridAngular} from "ag-grid-angular";
+import {gridOptions, tableConfig} from "./tableConfig";
+import {HttpClient} from "@angular/common/http";
+import {environment} from "../environments/environment";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 provideGlobalGridOptions({ theme: "legacy" });
 
-const NOT_DISPLAYED = ['x', 'y', 'objectname', 'url', 'name', 'Nazwa']; @Component({
+const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', 'rating', 'weight', 'objectid']);
+
+@Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   imports: [
-    HighchartsChartModule,
     FormsModule,
     AgGridAngular,
   ],
@@ -47,12 +46,9 @@ export class AppComponent {
       formatter: function () {
         const point = this as Highcharts.Point;
         let tooltip = `Name: <b>${point.name}</b><br>`;
-        tooltip += `Rating: <b>${point.y}</b><br>`;
-        tooltip += `Weight: <b>${point.x}</b><br>`;
-
         const options = point.options as any;
         for (let tooltipName of Object.keys(options)) {
-          if (!!options[tooltipName] && !NOT_DISPLAYED.includes(tooltipName)) {
+          if (!!options[tooltipName] && !NOT_DISPLAYED.has(tooltipName)) {
             // @ts-ignore
             tooltip += `${tooltipName}: <b>${point[tooltipName]}</b><br>`;
           }
@@ -109,12 +105,23 @@ export class AppComponent {
   counter = 0;
   isExpanded: boolean = false;
   dataLoaded: boolean = false;
+  fileDate?: string;
   rowData: any[] = [];
   columnDefs: ColDef[] = [];
   visibleColumns: Set<string> = new Set();
   @ViewChild('agGrid') agGrid!: AgGridAngular;
-  protected readonly gridOptions = gridOptions;
-  excludeExpansions = true;
+  showStandalone = true;
+  showExpansions = true;
+  gridOptions = {
+    ...gridOptions,
+    isExternalFilterPresent: () => true,
+    doesExternalFilterPass: (node: any) => {
+      const type = node.data.itemtype;
+      if (type === 'standalone') return this.showStandalone;
+      if (type === 'expansion') return this.showExpansions;
+      return true;
+    }
+  };
   private results: DataPoint[] = [];
 
 
@@ -126,7 +133,7 @@ export class AppComponent {
     translation: this.getTranslation(key)
   }));
 
-  constructor(private http: HttpClient) {
+  constructor(private readonly http: HttpClient) {
   }
 
   getTranslation(key: string): string {
@@ -145,6 +152,9 @@ export class AppComponent {
 
   async onFileUpload(event: any) {
     const file = event.target.files[0];
+    if (file) {
+      this.fileDate = this.formatDate(new Date(file.lastModified));
+    }
     await this.pareseCSV(file)
   }
 
@@ -177,11 +187,11 @@ export class AppComponent {
     const dataPoints: DataPoint[] = [];
     const expansion: DataPoint[] = [];
     data.forEach((row) => {
-      const average = +parseFloat(row['average']).toFixed(3);
-      const avgWeight = +parseFloat(row['avgweight']).toFixed(3);
+      const average = +Number.parseFloat(row['average']).toFixed(3);
+      const avgWeight = +Number.parseFloat(row['avgweight']).toFixed(3);
       const objectName = row['objectname'];
       const objectid = row['objectid'];
-      if (!isNaN(average) && !isNaN(avgWeight) && avgWeight !== 0) {
+      if (!Number.isNaN(average) && !Number.isNaN(avgWeight) && avgWeight !== 0) {
         const dataPoint: DataPoint = {
           x: avgWeight,
           y: average,
@@ -195,54 +205,43 @@ export class AppComponent {
           }
         });
 
-        if (this.excludeExpansions) {
-          if (row['itemtype'] === 'standalone') {
-            dataPoints.push(dataPoint);
-            this.counter++;
-          }
-        } else {
-          if (row['itemtype'] === 'standalone') {
-            dataPoints.push(dataPoint);
-            this.counter++;
-          }
-          if (row['itemtype'] === 'expansion') {
-            expansion.push(dataPoint);
-            this.counter++;
-          }
+        const isStandalone = row['itemtype'] === 'standalone';
+        const isExpansion = row['itemtype'] === 'expansion';
+
+        if (isStandalone && this.showStandalone) {
+          dataPoints.push(dataPoint);
+          this.counter++;
+        } else if (isExpansion && this.showExpansions) {
+          expansion.push(dataPoint);
+          this.counter++;
         }
       }
     });
     return [dataPoints, expansion];
   }
 
-  private processTableData(result: ParseResult<DataPoint>) {
-    this.populateVisibleColumns();
-    this.rowData = result.data.map(row => {
-      if (row.bggrecagerange && typeof row.bggrecagerange === 'string') {
-        row.bggrecagerange = parseFloat(row.bggrecagerange.replace('+', ''));
+  onRowClicked(event: RowClickedEvent) {
+    if (!this.chart) return;
+
+    const objectId = event.data.objectid;
+    // Wyczyść poprzednie zaznaczenia
+    this.chart.getSelectedPoints().forEach(p => p.select(false));
+
+    // Szukamy w obu seriach (Gry i Dodatki)
+    this.chart.series.forEach(series => {
+      const point = series.data.find(p => (p.options as any).objectid === objectId);
+      if (point) {
+        point.select(true, false);
       }
-      return row;
     });
-    this.columnDefs = this.generateColumns(result.data[0] as unknown as any[]);
-    this.columnDefs[0].pinned = "left";
   }
 
-  onRowClicked(event: RowClickedEvent) {
-    switch (event.data.itemtype) {
-      case 'standalone': {
-        // @ts-ignore
-        const point: Highcharts.Point[] = this.chart?.series[0].data.filter(p => p.objectid === event.data.objectid);
-        point[0]?.select(true, false);
-        break;
-      }
-      case 'expansion': {
-        // @ts-ignore
-        const pointExpansion: Highcharts.Point[] = this.chart?.series[1].data.filter(p => p.objectid === event.data.objectid);
-        pointExpansion[0]?.select(true, false);
-        break;
+  populateVisibleColumns(): void {
+    for (const key in tableConfig) {
+      if (tableConfig[key]?.visible) {
+        this.visibleColumns.add(key);
       }
     }
-
   }
 
   onFilterChanged() {
@@ -250,7 +249,6 @@ export class AppComponent {
     this.gridApi.forEachNodeAfterFilter(node => {
       filteredData.push(node.data);
     });
-    console.log(filteredData);
     const dataPoints = this.extractData(filteredData);
     this.updateChart(dataPoints[0], dataPoints[1]);
     this.chart = Highcharts.chart("hcContainer", this.chartOptions);
@@ -266,14 +264,6 @@ export class AppComponent {
       }
     }
     return "text"
-  }
-
-  populateVisibleColumns(): void {
-    for (const key in tableConfig) {
-      if (tableConfig[key] && tableConfig[key].visible) {
-        this.visibleColumns.add(key);
-      }
-    }
   }
 
   onUpdate(entry: { key: string, visible: boolean }) {
@@ -297,7 +287,7 @@ export class AppComponent {
 
           const options = point.options as any;
           for (let tooltipName of Object.keys(options)) {
-            if (!!options[tooltipName] && !NOT_DISPLAYED.includes(tooltipName)) {
+            if (!!options[tooltipName] && !NOT_DISPLAYED.has(tooltipName)) {
               tooltip += `${tooltipName}: <b>${options[tooltipName]}</b><br>`;
             }
           }
@@ -308,6 +298,13 @@ export class AppComponent {
     };
 
     this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+  }
+
+  onToggleFilters() {
+    const dataPoints = this.extractData();
+    this.updateChart(dataPoints[0], dataPoints[1]);
+    this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+    this.gridApi.onFilterChanged();
   }
 
 
@@ -352,31 +349,27 @@ export class AppComponent {
     this.isExpanded = !this.isExpanded;
   }
 
-  onUpdateExcludeExpansions(excludeExpansions: boolean) {
-    this.excludeExpansions = excludeExpansions;
-    const dataPoints = this.extractData();
-    this.updateChart(dataPoints[0], dataPoints[1]);
-    this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+  onLoadMyExample() {
+    const filePath = environment.filePath;
+    this.http.get(filePath, {observe: 'response', responseType: 'text'}).subscribe((response) => {
+      const lastModified = response.headers.get('Last-Modified');
+      if (lastModified) {
+        this.fileDate = this.formatDate(new Date(lastModified));
+      }
+      this.pareseCSV(response.body!);
+    });
   }
 
-  private processPoints(dataPoints: DataPoint[]) {
-    return dataPoints.map((point) => {
-      const additionalProps: StringKeyValueMap = {};
-      Object.keys(tableConfig).forEach(key => {
-        if (tableConfig[key].visible && !(key in additionalProps)) {
-          const translatedKey = this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
-          additionalProps[translatedKey] = point[key];
-        }
-      });
-
-      return {
-        name: point.objectname,
-        x: point.x,
-        y: point.y,
-        url: this.link + point.objectid,
-        ...additionalProps
-      };
+  private processTableData(result: ParseResult<DataPoint>) {
+    this.populateVisibleColumns();
+    this.rowData = result.data.map(row => {
+      if (row.bggrecagerange && typeof row.bggrecagerange === 'string') {
+        row.bggrecagerange = Number.parseFloat(row.bggrecagerange.replace('+', ''));
+      }
+      return row;
     });
+    this.columnDefs = this.generateColumns(result.data[0] as unknown as any[]);
+    this.columnDefs[0].pinned = "left";
   }
 
   private validateCsv(file: File): Promise<boolean> {
@@ -403,11 +396,34 @@ export class AppComponent {
     });
   }
 
-  onLoadMyExample() {
-    const filePath = environment.filePath;
-    this.http.get(filePath, { responseType: 'text' }).subscribe((data) => {
-      this.pareseCSV(data);
+  private processPoints(dataPoints: DataPoint[]) {
+    return dataPoints.map((point) => {
+      const additionalProps: StringKeyValueMap = {};
+      Object.keys(tableConfig).forEach(key => {
+        if (tableConfig[key].visible && !(key in additionalProps)) {
+          const translatedKey = this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
+          additionalProps[translatedKey] = point[key];
+        }
+      });
+
+      return {
+        name: point.objectname,
+        x: point.x,
+        y: point.y,
+        url: this.link + point.objectid,
+        objectid: point.objectid,
+        ...additionalProps
+      };
     });
+  }
+
+  private formatDate(date: Date): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
   }
 
   private initializeChart(): void {
@@ -426,12 +442,12 @@ export class AppComponent {
       floatingFilter: true,
       cellDataType: this.calculateCellDataType(key),
     } as ColDef));
-    columnNames.map(key => {
-      if (key.field === 'objectname') {
-        key.pinned = 'left';
-        key.lockPinned = true;
+    columnNames.forEach(col => {
+      if (col.field === 'objectname') {
+        col.pinned = 'left';
+        col.lockPinned = true;
       }
-    })
+    });
     return columnNames;
   }
 
