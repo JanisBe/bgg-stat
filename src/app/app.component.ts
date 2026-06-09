@@ -1,9 +1,9 @@
-import {Component, ViewChild} from '@angular/core';
+import { Component, ViewChild, HostListener } from '@angular/core';
 import * as Papa from 'papaparse';
-import {ParseResult} from 'papaparse';
+import { ParseResult } from 'papaparse';
 import * as Highcharts from 'highcharts';
-import {Chart} from 'highcharts';
-import {FormsModule} from "@angular/forms";
+import { Chart } from 'highcharts';
+import { FormsModule } from "@angular/forms";
 import {
   AllCommunityModule,
   ColDef,
@@ -14,13 +14,16 @@ import {
   RowClickedEvent,
   RowStyle
 } from "ag-grid-community";
-import {AgGridAngular} from "ag-grid-angular";
-import {gridOptions, tableConfig} from "./tableConfig";
-import {HttpClient} from "@angular/common/http";
-import {environment} from "../environments/environment";
+import { AgGridAngular } from "ag-grid-angular";
+import { gridOptions, tableConfig } from "./tableConfig";
+import { HttpClient } from "@angular/common/http";
+import { environment } from "../environments/environment";
+import { getActiveTranslations } from "./i18n";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 provideGlobalGridOptions({ theme: "legacy" });
+
+const t = getActiveTranslations();
 
 const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', 'rating', 'weight', 'objectid']);
 
@@ -35,12 +38,13 @@ const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', '
   standalone: true,
 })
 export class AppComponent {
+  t = t;
   chart: Chart | undefined;
   chartOptions: Highcharts.Options = {
     chart: { type: 'scatter', height: 800 },
-    title: { text: 'Ocena na BGG vs Trudność' },
-    xAxis: { title: { text: 'Ciężar (trudność)' } },
-    yAxis: { title: { text: 'Ocena BGG' } },
+    title: { text: t.chartTitle },
+    xAxis: { title: { text: t.chartXAxis } },
+    yAxis: { title: { text: t.chartYAxis } },
     tooltip: {
       useHTML: true,
       formatter: function () {
@@ -59,13 +63,13 @@ export class AppComponent {
     series: [
       {
         type: 'scatter',
-        name: 'Games',
+        name: t.chartSeriesGames,
         data: [],
         color: 'rgba(5,141,199,0.5)'
       },
       {
         type: 'scatter',
-        name: 'Expansions',
+        name: t.chartSeriesExpansions,
         data: [],
         color: 'rgba(237,86,27,0.5)'
       },
@@ -177,7 +181,7 @@ export class AppComponent {
         },
       });
     } else {
-      alert("Problem z plikiem CSV, czy na pewno pochodzi z BGG?\nProblem with CSV file, is it for sure from BGG?");
+      alert(t.csvErrorAlert);
     }
   }
 
@@ -314,7 +318,7 @@ export class AppComponent {
       series: [
         {
           type: 'scatter',
-          name: 'Games',
+          name: t.chartSeriesGames,
           marker: {
             symbol: 'circle',
             color: 'rgba(237,86,27,0.5)'
@@ -323,7 +327,7 @@ export class AppComponent {
         },
         {
           type: 'scatter',
-          name: 'Expansions',
+          name: t.chartSeriesExpansions,
           marker: {
             symbol: 'square',
             color: 'rgba(5,141,199,0.5)'
@@ -336,10 +340,11 @@ export class AppComponent {
 
   onGridReady(params: { api: GridApi; }) {
     this.gridApi = params.api;
+    this.checkScreenSize();
   }
 
   addUserName() {
-    const userName = prompt('Enter your name:');
+    const userName = prompt(t.enterNamePrompt);
     if (userName) {
       window.open(`https://boardgamegeek.com/geekcollection.php?action=exportcsv&subtype=boardgame&username=${userName}&all=1`)
     }
@@ -351,7 +356,7 @@ export class AppComponent {
 
   onLoadMyExample() {
     const filePath = environment.filePath;
-    this.http.get(filePath, {observe: 'response', responseType: 'text'}).subscribe((response) => {
+    this.http.get(filePath, { observe: 'response', responseType: 'text' }).subscribe((response) => {
       const lastModified = response.headers.get('Last-Modified');
       if (lastModified) {
         this.fileDate = this.formatDate(new Date(lastModified));
@@ -369,7 +374,10 @@ export class AppComponent {
       return row;
     });
     this.columnDefs = this.generateColumns(result.data[0] as unknown as any[]);
-    this.columnDefs[0].pinned = "left";
+    const isMobile = window.innerWidth < 768;
+    if (this.columnDefs[0]) {
+      this.columnDefs[0].pinned = isMobile ? null : "left";
+    }
   }
 
   private validateCsv(file: File): Promise<boolean> {
@@ -431,6 +439,7 @@ export class AppComponent {
   }
 
   private generateColumns(collection: any[]) {
+    const isMobile = window.innerWidth < 768;
     let columnNames = Object.keys(collection || {}).map(key => ({
       field: key,
       headerName: this.generateName(key),
@@ -444,8 +453,8 @@ export class AppComponent {
     } as ColDef));
     columnNames.forEach(col => {
       if (col.field === 'objectname') {
-        col.pinned = 'left';
-        col.lockPinned = true;
+        col.pinned = isMobile ? null : 'left';
+        col.lockPinned = !isMobile;
       }
     });
     return columnNames;
@@ -453,6 +462,17 @@ export class AppComponent {
 
   private generateName(key: string) {
     return this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkScreenSize();
+  }
+
+  private checkScreenSize() {
+    if (!this.gridApi) return;
+    const isMobile = window.innerWidth < 768;
+    this.gridApi.setColumnsPinned(['objectname'], isMobile ? null : 'left');
   }
 }
 

@@ -3,35 +3,34 @@
     <div class="file-date">{{ fileDate }}</div>
   }
   <div>
-    <h1>BGG collection</h1>
+    <h1>{{ t.title }}</h1>
     @if (counter != 0) {
-      Wyświetlono {{ counter }} gier
+      {{ t.displayedGames.replace('{counter}', '' + counter) }}
     }
     <div class="controls-row">
       <div class="upload">
-        <input (change)="onFileUpload($event)" accept="text/csv" type="file"/> lub <p (click)="onLoadMyExample()"
-                                                                                      class="myCSV bold">użyj mojego
-        CSV</p>
+        <input (change)="onFileUpload($event)" accept="text/csv" type="file"/>{{ t.or }}<p (click)="onLoadMyExample()"
+                                                                                      class="myCSV bold">{{ t.useMyCsv }}</p>
       </div>
       @if (dataLoaded) {
 
         <div class="filter-bar">
           <div class="filter-group">
-            <strong>Filtruj / Filter:</strong>
+            <strong>{{ t.filter }}</strong>
             <label class="filter-item">
               <input (change)="onToggleFilters()" [(ngModel)]="showStandalone" type="checkbox"/>
-              Gry podstawowe / Base games
+              {{ t.baseGames }}
             </label>
             <label class="filter-item">
               <input (change)="onToggleFilters()" [(ngModel)]="showExpansions" type="checkbox"/>
-              Dodatki / Expansions
+              {{ t.expansions }}
             </label>
           </div>
         </div>
         <div class="options" style="position: relative;">
-          <div (click)="toggleOptions()" class="tooltip">Opcje / Options
+          <div (click)="toggleOptions()" class="tooltip">{{ t.options }}
             @if (!dataLoaded) {
-              <span class="tooltiptext">Najpierw załaduj plik csv<br>First load csv file</span>
+              <span class="tooltiptext">{{ t.loadCsvTooltip }}</span>
             }
           </div>
 
@@ -64,30 +63,10 @@
   <div>
     <br>
     <br>
-    <h2>Info:</h2>
-    Ściągnij swoją kolekcję z bgg jako csv, a następnie wczytaj ja tu.
-    Można to zrobic z tutaj, klikając <span class="bold" (click)="addUserName()">tutaj</span> i
-    wpisując nazwę użytkownika.
-    <h2>Sposób obsługi:</h2>
-    Gdy wgrasz plik csv, wyświetli się wykres ciężar (weight) vs średnia ocena z BGG oraz tabelka z
-    wczytanymi grami.
-    Tabelkę można sortować oraz filtrować.<br>
-    Gdy klikniesz w wiersz zawierający jakąś grę, podświetli się ona na wykresie.
-    W opcjach (po prawej) można odhaczyć pokazywanie dodatków oraz dodać do tabeli więcej
-    informacji.
-    <br>
-    <hr>
-    <br>
-    Download your collection from bgg as csv, then upload it here.
-    It can be done from here, click <span (click)="addUserName()" class="bold">here</span> and
-    input your user name.
-    <H2>How to use:</H2>
-    When you upload csv file, you'll see a graph of weight vs average score from BGG and a table
-    containing uploaded games.
-    The table can be sorted and filtered. <br>When you click on a row containing a game, it'll be
-    highlighted on a graph.
-    In the options (on the right) you can uncheck displaying game extensions and add more info to
-    the table.
+    <h2>{{ t.infoTitle }}</h2>
+    {{ t.infoTextPart1 }}<span class="bold" (click)="addUserName()">{{ t.infoTextClickHere }}</span>{{ t.infoTextPart2 }}
+    <h2>{{ t.howToUseTitle }}</h2>
+    <div [innerHTML]="t.howToUseText"></div>
   </div>
 
 </div>
