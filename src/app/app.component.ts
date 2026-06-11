@@ -12,6 +12,7 @@ import {
   provideGlobalGridOptions,
   RowClassParams,
   RowClickedEvent,
+  RowDoubleClickedEvent,
   RowStyle
 } from "ag-grid-community";
 import { AgGridAngular } from "ag-grid-angular";
@@ -19,6 +20,13 @@ import { gridOptions, tableConfig } from "./tableConfig";
 import { HttpClient } from "@angular/common/http";
 import { environment } from "../environments/environment";
 import { getActiveTranslations } from "./i18n";
+import {
+  clearUiPreferences,
+  hasUiPreferences,
+  loadUiPreferences,
+  saveUiPreferences,
+  UiPreferences
+} from "./uiPreferences";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 provideGlobalGridOptions({ theme: "legacy" });
@@ -106,9 +114,13 @@ export class AppComponent {
     },
   };
   private gridApi!: GridApi;
+  private savePreferencesTimeout?: ReturnType<typeof setTimeout>;
+  private pendingFilterModel: Record<string, unknown> | null = null;
+  private pendingColumnState: ReturnType<GridApi['getColumnState']> | null = null;
   counter = 0;
   isExpanded: boolean = false;
   dataLoaded: boolean = false;
+  hasSavedPreferences = hasUiPreferences();
   fileDate?: string;
   rowData: any[] = [];
   columnDefs: ColDef[] = [];
@@ -130,6 +142,9 @@ export class AppComponent {
 
 
   private readonly link = "https://boardgamegeek.com/boardgame/";
+  private readonly doubleTapDelayMs = 300;
+  private lastTapTime = 0;
+  private lastTapObjectId: string | number | null = null;
 
   checkboxOptions = Object.keys(tableConfig).map(key => ({
     key,
@@ -138,6 +153,7 @@ export class AppComponent {
   }));
 
   constructor(private readonly http: HttpClient) {
+    this.applyStoredPreferences();
   }
 
   getTranslation(key: string): string {
@@ -225,9 +241,15 @@ export class AppComponent {
   }
 
   onRowClicked(event: RowClickedEvent) {
+    const objectId = event.data.objectid;
+
+    if (this.isTouchDevice() && this.isDoubleTap(objectId)) {
+      this.openBggPage(objectId);
+      return;
+    }
+
     if (!this.chart) return;
 
-    const objectId = event.data.objectid;
     // Wyczyść poprzednie zaznaczenia
     this.chart.getSelectedPoints().forEach(p => p.select(false));
 
@@ -240,11 +262,128 @@ export class AppComponent {
     });
   }
 
+  onRowDoubleClicked(event: RowDoubleClickedEvent) {
+    this.openBggPage(event.data.objectid);
+  }
+
+  private isTouchDevice(): boolean {
+    return 'ontouchstart' in globalThis || navigator.maxTouchPoints > 0;
+  }
+
+  private isDoubleTap(objectId: string | number): boolean {
+    const now = Date.now();
+    const isDoubleTap = this.lastTapObjectId === objectId && now - this.lastTapTime < this.doubleTapDelayMs;
+    this.lastTapTime = now;
+    this.lastTapObjectId = objectId;
+    return isDoubleTap;
+  }
+
+  private openBggPage(objectId: string | number | undefined): void {
+    if (objectId) {
+      window.open(this.link + objectId, '_blank');
+    }
+  }
+
   populateVisibleColumns(): void {
-    for (const key in tableConfig) {
-      if (tableConfig[key]?.visible) {
-        this.visibleColumns.add(key);
+    this.visibleColumns.clear();
+    for (const option of this.checkboxOptions) {
+      if (option.visible) {
+        this.visibleColumns.add(option.key);
       }
+    }
+  }
+
+  private applyStoredPreferences(): void {
+    const prefs = loadUiPreferences();
+    if (!prefs) {
+      return;
+    }
+
+    if (prefs.showStandalone !== undefined) {
+      this.showStandalone = prefs.showStandalone;
+    }
+    if (prefs.showExpansions !== undefined) {
+      this.showExpansions = prefs.showExpansions;
+    }
+
+    for (const option of this.checkboxOptions) {
+      if (option.key in prefs.columnVisibility) {
+        option.visible = prefs.columnVisibility[option.key];
+      }
+    }
+
+    this.pendingFilterModel = prefs.filterModel;
+    this.pendingColumnState = prefs.columnState;
+  }
+
+  private scheduleSavePreferences(): void {
+    clearTimeout(this.savePreferencesTimeout);
+    this.savePreferencesTimeout = setTimeout(() => this.savePreferences(), 300);
+  }
+
+  private savePreferences(): void {
+    if (!this.gridApi) {
+      this.persistPreferencesWithoutGrid();
+      return;
+    }
+
+    const columnState = this.gridApi.getColumnState().map(({ hide, ...rest }) => rest);
+    const prefs: UiPreferences = {
+      columnVisibility: Object.fromEntries(
+        this.checkboxOptions.map(option => [option.key, option.visible])
+      ),
+      showStandalone: this.showStandalone,
+      showExpansions: this.showExpansions,
+      filterModel: this.gridApi.getFilterModel(),
+      columnState,
+    };
+
+    saveUiPreferences(prefs);
+    this.hasSavedPreferences = true;
+  }
+
+  private persistPreferencesWithoutGrid(): void {
+    const prefs: UiPreferences = {
+      columnVisibility: Object.fromEntries(
+        this.checkboxOptions.map(option => [option.key, option.visible])
+      ),
+      showStandalone: this.showStandalone,
+      showExpansions: this.showExpansions,
+      filterModel: this.pendingFilterModel,
+      columnState: this.pendingColumnState ?? [],
+    };
+
+    saveUiPreferences(prefs);
+    this.hasSavedPreferences = true;
+  }
+
+  resetPreferences(): void {
+    clearUiPreferences();
+    this.hasSavedPreferences = false;
+    this.pendingFilterModel = null;
+    this.pendingColumnState = null;
+    this.showStandalone = true;
+    this.showExpansions = true;
+
+    this.checkboxOptions = Object.keys(tableConfig).map(key => ({
+      key,
+      visible: tableConfig[key].visible,
+      translation: this.getTranslation(key)
+    }));
+
+    if (this.dataLoaded) {
+      this.populateVisibleColumns();
+      this.columnDefs = this.generateColumns(this.rowData[0] ?? {});
+
+    if (this.gridApi) {
+        this.gridApi.resetColumnState();
+        this.gridApi.setFilterModel(null);
+        this.gridApi.onFilterChanged();
+      }
+
+      const dataPoints = this.extractData();
+      this.updateChart(dataPoints[0], dataPoints[1]);
+      this.chart = Highcharts.chart("hcContainer", this.chartOptions);
     }
   }
 
@@ -256,6 +395,7 @@ export class AppComponent {
     const dataPoints = this.extractData(filteredData);
     this.updateChart(dataPoints[0], dataPoints[1]);
     this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+    this.scheduleSavePreferences();
   }
 
   private calculateCellDataType(key: string): string {
@@ -302,6 +442,7 @@ export class AppComponent {
     };
 
     this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+    this.scheduleSavePreferences();
   }
 
   onToggleFilters() {
@@ -309,6 +450,7 @@ export class AppComponent {
     this.updateChart(dataPoints[0], dataPoints[1]);
     this.chart = Highcharts.chart("hcContainer", this.chartOptions);
     this.gridApi.onFilterChanged();
+    this.scheduleSavePreferences();
   }
 
 
@@ -341,6 +483,24 @@ export class AppComponent {
   onGridReady(params: { api: GridApi; }) {
     this.gridApi = params.api;
     this.checkScreenSize();
+    this.applyPendingGridState();
+  }
+
+  private applyPendingGridState(): void {
+    if (this.pendingColumnState?.length) {
+      this.gridApi.applyColumnState({ state: this.pendingColumnState, applyOrder: true });
+      this.pendingColumnState = null;
+    }
+
+    if (this.pendingFilterModel) {
+      this.gridApi.setFilterModel(this.pendingFilterModel);
+      this.pendingFilterModel = null;
+      this.gridApi.onFilterChanged();
+    }
+  }
+
+  onGridStateChanged(): void {
+    this.scheduleSavePreferences();
   }
 
   addUserName() {

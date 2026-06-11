@@ -36,6 +36,11 @@
 
           @if (isExpanded) {
             <div (mouseleave)="isExpanded=false" id="options-container">
+              @if (hasSavedPreferences) {
+                <div class="option-item reset-item">
+                  <button (click)="resetPreferences()" type="button">{{ t.resetPreferences }}</button>
+                </div>
+              }
               @for (option of checkboxOptions; track option) {
                 <div class="option-item">
                   <label for="{{ option.key }}">{{ option.translation || option.key }}</label>
@@ -52,8 +57,10 @@
   </div>
   <div>
     @if (dataLoaded) {
-      <ag-grid-angular #agGrid (filterChanged)="onFilterChanged()" (gridReady)="onGridReady($event)"
-                       (rowClicked)="onRowClicked($event)"
+      <ag-grid-angular #agGrid (columnMoved)="onGridStateChanged()" (columnResized)="onGridStateChanged()"
+                       (filterChanged)="onFilterChanged()" (gridReady)="onGridReady($event)"
+                       (rowClicked)="onRowClicked($event)" (rowDoubleClicked)="onRowDoubleClicked($event)"
+                       (sortChanged)="onGridStateChanged()"
                        [columnDefs]="columnDefs" [columnHoverHighlight]="true" [getRowStyle]="rowStyle"
                        [gridOptions]="gridOptions" [rowData]="rowData"
                        class="ag-theme-alpine"

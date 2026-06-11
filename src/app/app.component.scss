@@ -73,6 +73,27 @@
   margin: 5px 0;
 }
 
+.reset-item {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ccc;
+
+  button {
+    width: 100%;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-family: inherit;
+    font-size: 12px;
+    background: #fff;
+    border: 1px solid darkcyan;
+    border-radius: 4px;
+
+    &:hover {
+      background: #f0fafa;
+    }
+  }
+}
+
 .tooltip {
   position: relative;
   display: inline-block;

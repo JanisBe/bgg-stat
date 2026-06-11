@@ -7,6 +7,7 @@ export interface TranslationKeys {
   baseGames: string;
   expansions: string;
   options: string;
+  resetPreferences: string;
   loadCsvTooltip: string;
   infoTitle: string;
   infoTextPart1: string;
@@ -34,6 +35,7 @@ export const translationsPl: TranslationKeys = {
   baseGames: "Gry podstawowe",
   expansions: "Dodatki",
   options: "Opcje",
+  resetPreferences: "Przywróć domyślne ustawienia",
   loadCsvTooltip: "Najpierw załaduj plik CSV",
   infoTitle: "Info:",
   infoTextPart1: "Ściągnij swoją kolekcję z bgg jako csv, a następnie wczytaj ja tu. Można to zrobić stąd, klikając ",
@@ -60,6 +62,7 @@ export const translationsEn: TranslationKeys = {
   baseGames: "Base games",
   expansions: "Expansions",
   options: "Options",
+  resetPreferences: "Reset to default settings",
   loadCsvTooltip: "First load CSV file",
   infoTitle: "Info:",
   infoTextPart1: "Download your collection from bgg as csv, then upload it here. It can be done from here, click ",
