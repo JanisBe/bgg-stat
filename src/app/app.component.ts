@@ -1,13 +1,16 @@
-import { Component, ViewChild, HostListener } from '@angular/core';
+import {Component, HostListener, ViewChild} from '@angular/core';
 import * as Papa from 'papaparse';
-import { ParseResult } from 'papaparse';
+import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
-import { Chart } from 'highcharts';
-import { FormsModule } from "@angular/forms";
+import {Chart} from 'highcharts';
+import {FormsModule} from "@angular/forms";
 import {
   AllCommunityModule,
   ColDef,
+  ColumnHeaderContextMenuEvent,
+  ColumnVisibleEvent,
   GridApi,
+  isColumn,
   ModuleRegistry,
   provideGlobalGridOptions,
   RowClassParams,
@@ -15,11 +18,13 @@ import {
   RowDoubleClickedEvent,
   RowStyle
 } from "ag-grid-community";
-import { AgGridAngular } from "ag-grid-angular";
-import { gridOptions, tableConfig } from "./tableConfig";
-import { HttpClient } from "@angular/common/http";
-import { environment } from "../environments/environment";
-import { getActiveTranslations } from "./i18n";
+import {AgGridAngular} from "ag-grid-angular";
+import {gridOptions, tableConfig} from "./tableConfig";
+import {ColumnMenuRequest, ColumnMenuService} from "./column-menu.service";
+import {InnerHeaderComponent} from "./inner-header.component";
+import {HttpClient} from "@angular/common/http";
+import {environment} from "../environments/environment";
+import {getActiveTranslations} from "./i18n";
 import {
   clearUiPreferences,
   hasUiPreferences,
@@ -128,8 +133,16 @@ export class AppComponent {
   @ViewChild('agGrid') agGrid!: AgGridAngular;
   showStandalone = true;
   showExpansions = true;
+  columnMenuOpen = false;
+  columnMenuX = 0;
+  columnMenuY = 0;
+  columnMenuColId: string | null = null;
   gridOptions = {
     ...gridOptions,
+    defaultColDef: {
+      ...gridOptions.defaultColDef,
+      innerHeaderComponent: InnerHeaderComponent,
+    },
     isExternalFilterPresent: () => true,
     doesExternalFilterPass: (node: any) => {
       const type = node.data.itemtype;
@@ -145,6 +158,8 @@ export class AppComponent {
   private readonly doubleTapDelayMs = 300;
   private lastTapTime = 0;
   private lastTapObjectId: string | number | null = null;
+  private lastContextMenuX = 0;
+  private lastContextMenuY = 0;
 
   checkboxOptions = Object.keys(tableConfig).map(key => ({
     key,
@@ -152,7 +167,11 @@ export class AppComponent {
     translation: this.getTranslation(key)
   }));
 
-  constructor(private readonly http: HttpClient) {
+  constructor(
+    private readonly http: HttpClient,
+    private readonly columnMenuService: ColumnMenuService,
+  ) {
+    this.columnMenuService.open$.subscribe(request => this.openColumnMenu(request));
     this.applyStoredPreferences();
   }
 
@@ -411,38 +430,92 @@ export class AppComponent {
   }
 
   onUpdate(entry: { key: string, visible: boolean }) {
-    if (this.visibleColumns.has(entry.key) && !entry.visible) {
-      this.visibleColumns.delete(entry.key);
-      this.agGrid.api.setColumnsVisible([entry.key], false);
-    } else if (entry.visible) {
-      this.visibleColumns.add(entry.key);
-      this.agGrid.api.setColumnsVisible([entry.key], true);
+    this.syncColumnVisibility(entry.key, entry.visible, true);
+    this.onColumnVisibilityChanged();
+  }
+
+  onColumnHeaderContextMenu(event: ColumnHeaderContextMenuEvent) {
+    if (!isColumn(event.column)) {
+      return;
     }
 
-    this.chartOptions = {
-      ...this.chartOptions,
-      tooltip: {
-        ...this.chartOptions.tooltip,
-        formatter: function () {
-          const point = this as Highcharts.Point;
-          let tooltip = `Name: <b>${point.name}</b><br>`;
-          tooltip += `Rating: <b>${point.y}</b><br>`;
-          tooltip += `Weight: <b>${point.x}</b><br>`;
+    const colId = event.column.getColId();
+    const headerEl = document.querySelector(`.ag-header-cell[col-id="${colId}"]`) as HTMLElement | null;
 
-          const options = point.options as any;
-          for (let tooltipName of Object.keys(options)) {
-            if (!!options[tooltipName] && !NOT_DISPLAYED.has(tooltipName)) {
-              tooltip += `${tooltipName}: <b>${options[tooltipName]}</b><br>`;
-            }
-          }
+    this.openColumnMenu({
+      colId,
+      anchor: headerEl ?? undefined,
+      clientX: this.lastContextMenuX,
+      clientY: this.lastContextMenuY,
+    });
+  }
 
-          return tooltip;
-        }
+  openColumnMenu(request: ColumnMenuRequest) {
+    if (request.anchor) {
+      const rect = request.anchor.getBoundingClientRect();
+      this.columnMenuX = rect.left;
+      this.columnMenuY = rect.bottom + 4;
+    } else {
+      this.columnMenuX = request.clientX ?? 0;
+      this.columnMenuY = request.clientY ?? 0;
+    }
+
+    this.columnMenuColId = request.colId;
+    this.columnMenuOpen = true;
+  }
+
+  closeColumnMenu() {
+    this.columnMenuOpen = false;
+    this.columnMenuColId = null;
+  }
+
+  hideColumnFromMenu() {
+    if (!this.columnMenuColId || this.columnMenuColId === 'objectname') {
+      return;
+    }
+
+    const option = this.checkboxOptions.find(o => o.key === this.columnMenuColId);
+    if (option) {
+      option.visible = false;
+      this.syncColumnVisibility(this.columnMenuColId, false, true);
+      this.onColumnVisibilityChanged();
+    }
+
+    this.closeColumnMenu();
+  }
+
+  toggleColumnFromMenu(option: { key: string; visible: boolean }, event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    option.visible = checked;
+    this.syncColumnVisibility(option.key, checked, true);
+    this.onColumnVisibilityChanged();
+  }
+
+  onColumnVisible(event: ColumnVisibleEvent) {
+    const columns = event.columns ?? (event.column ? [event.column] : []);
+    let changed = false;
+
+    for (const column of columns) {
+      if (this.syncColumnVisibility(column.getColId(), column.isVisible(), false)) {
+        changed = true;
       }
-    };
+    }
 
-    this.chart = Highcharts.chart("hcContainer", this.chartOptions);
-    this.scheduleSavePreferences();
+    if (changed) {
+      this.onColumnVisibilityChanged();
+    }
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkScreenSize();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.columnMenuOpen) {
+      this.closeColumnMenu();
+    }
   }
 
   onToggleFilters() {
@@ -564,11 +637,77 @@ export class AppComponent {
     });
   }
 
+  @HostListener('document:contextmenu', ['$event'])
+  onDocumentContextMenu(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.ag-header-cell, .ag-header-group-cell')) {
+      return;
+    }
+
+    this.lastContextMenuX = event.clientX;
+    this.lastContextMenuY = event.clientY;
+    event.preventDefault();
+  }
+
+  private formatDate(date: Date): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+  }
+
+  private initializeChart(): void {
+    this.chart = Highcharts.chart('hcContainer', this.chartOptions);
+  }
+
+  private syncColumnVisibility(colId: string, visible: boolean, updateGrid: boolean): boolean {
+    const option = this.checkboxOptions.find(o => o.key === colId);
+    if (!option || option.visible === visible) {
+      return false;
+    }
+
+    option.visible = visible;
+    if (visible) {
+      this.visibleColumns.add(colId);
+    } else {
+      this.visibleColumns.delete(colId);
+    }
+
+    if (updateGrid && this.gridApi) {
+      this.gridApi.setColumnsVisible([colId], visible);
+    }
+
+    return true;
+  }
+
+  private generateName(key: string) {
+    return this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
+  }
+
+  private onColumnVisibilityChanged(): void {
+    if (!this.dataLoaded) {
+      this.scheduleSavePreferences();
+      return;
+    }
+
+    if (this.gridApi) {
+      const filteredData: any[] = [];
+      this.gridApi.forEachNodeAfterFilter(node => filteredData.push(node.data));
+      const dataPoints = this.extractData(filteredData);
+      this.updateChart(dataPoints[0], dataPoints[1]);
+      this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+    }
+
+    this.scheduleSavePreferences();
+  }
+
   private processPoints(dataPoints: DataPoint[]) {
     return dataPoints.map((point) => {
       const additionalProps: StringKeyValueMap = {};
       Object.keys(tableConfig).forEach(key => {
-        if (tableConfig[key].visible && !(key in additionalProps)) {
+        if (this.visibleColumns.has(key) && !(key in additionalProps)) {
           const translatedKey = this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
           additionalProps[translatedKey] = point[key];
         }
@@ -585,19 +724,6 @@ export class AppComponent {
     });
   }
 
-  private formatDate(date: Date): string {
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${day}.${month}.${year} ${hours}:${minutes}`;
-  }
-
-  private initializeChart(): void {
-    this.chart = Highcharts.chart('hcContainer', this.chartOptions);
-  }
-
   private generateColumns(collection: any[]) {
     const isMobile = window.innerWidth < 768;
     let columnNames = Object.keys(collection || {}).map(key => ({
@@ -607,7 +733,6 @@ export class AppComponent {
       filter: true,
       sortable: true,
       hide: !this.visibleColumns.has(key),
-      suppressColumnsToolPanel: true,
       floatingFilter: true,
       cellDataType: this.calculateCellDataType(key),
     } as ColDef));
@@ -615,18 +740,10 @@ export class AppComponent {
       if (col.field === 'objectname') {
         col.pinned = isMobile ? null : 'left';
         col.lockPinned = !isMobile;
+        col.lockVisible = true;
       }
     });
     return columnNames;
-  }
-
-  private generateName(key: string) {
-    return this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
-  }
-
-  @HostListener('window:resize')
-  onResize() {
-    this.checkScreenSize();
   }
 
   private checkScreenSize() {

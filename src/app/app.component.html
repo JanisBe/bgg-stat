@@ -57,8 +57,10 @@
   </div>
   <div>
     @if (dataLoaded) {
-      <ag-grid-angular #agGrid (columnMoved)="onGridStateChanged()" (columnResized)="onGridStateChanged()"
-                       (filterChanged)="onFilterChanged()" (gridReady)="onGridReady($event)"
+    <ag-grid-angular #agGrid (columnHeaderContextMenu)="onColumnHeaderContextMenu($event)"
+                     (columnMoved)="onGridStateChanged()" (columnResized)="onGridStateChanged()"
+                     (columnVisible)="onColumnVisible($event)" (filterChanged)="onFilterChanged()"
+                     (gridReady)="onGridReady($event)"
                        (rowClicked)="onRowClicked($event)" (rowDoubleClicked)="onRowDoubleClicked($event)"
                        (sortChanged)="onGridStateChanged()"
                        [columnDefs]="columnDefs" [columnHoverHighlight]="true" [getRowStyle]="rowStyle"
@@ -75,5 +77,26 @@
     <h2>{{ t.howToUseTitle }}</h2>
     <div [innerHTML]="t.howToUseText"></div>
   </div>
+
+  @if (columnMenuOpen) {
+  <div (click)="closeColumnMenu()" class="column-menu-backdrop"></div>
+  <div (click)="$event.stopPropagation()" [style.left.px]="columnMenuX" [style.top.px]="columnMenuY"
+       class="column-menu-popup">
+    @if (columnMenuColId && columnMenuColId !== 'objectname') {
+    <button (click)="hideColumnFromMenu()" class="column-menu-action" type="button">{{ t.hideColumn }}</button>
+    <div class="column-menu-separator"></div>
+    }
+    <div class="column-menu-title">{{ t.columnsMenu }}</div>
+    <div class="column-menu-list">
+      @for (option of checkboxOptions; track option.key) {
+      <label class="column-menu-item">
+        <input (change)="toggleColumnFromMenu(option, $event)" [checked]="option.visible"
+               [disabled]="option.key === 'objectname'" type="checkbox"/>
+        {{ option.translation || option.key }}
+      </label>
+      }
+    </div>
+  </div>
+  }
 
 </div>

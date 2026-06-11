@@ -8,6 +8,8 @@ export interface TranslationKeys {
   expansions: string;
   options: string;
   resetPreferences: string;
+  hideColumn: string;
+  columnsMenu: string;
   loadCsvTooltip: string;
   infoTitle: string;
   infoTextPart1: string;
@@ -36,13 +38,15 @@ export const translationsPl: TranslationKeys = {
   expansions: "Dodatki",
   options: "Opcje",
   resetPreferences: "Przywróć domyślne ustawienia",
+  hideColumn: "Ukryj kolumnę",
+  columnsMenu: "Kolumny",
   loadCsvTooltip: "Najpierw załaduj plik CSV",
   infoTitle: "Info:",
   infoTextPart1: "Ściągnij swoją kolekcję z bgg jako csv, a następnie wczytaj ja tu. Można to zrobić stąd, klikając ",
   infoTextClickHere: "tutaj",
   infoTextPart2: " i wpisując nazwę użytkownika.",
   howToUseTitle: "Sposób obsługi:",
-  howToUseText: `Gdy wgrasz plik csv, wyświetli się wykres ciężar (weight) vs średnia ocena z BGG oraz tabelka z wczytanymi grami.<br>Tabelkę można sortować oraz filtrować.<br>Gdy klikniesz w wiersz zawierający jakąś grę, podświetli się ona na wykresie.<br>W opcjach (po prawej) można odhaczyć pokazywanie dodatków oraz dodać do tabeli więcej informacji.`,
+  howToUseText: `Gdy wgrasz plik csv, wyświetli się wykres ciężar (weight) vs średnia ocena z BGG oraz tabelka z wczytanymi grami.<br>Tabelkę można sortować oraz filtrować.<br>Gdy klikniesz w wiersz zawierający jakąś grę, podświetli się ona na wykresie.<br>Kolumny można ukrywać i pokazywać przez ikonę ⋮ lub PPM na nagłówku kolumny, albo w opcjach (po prawej).<br>W filtrze można odhaczyć pokazywanie gier podstawowych i dodatków.`,
 
   chartTitle: "Ocena na BGG vs Trudność",
   chartXAxis: "Ciężar (trudność)",
@@ -63,13 +67,15 @@ export const translationsEn: TranslationKeys = {
   expansions: "Expansions",
   options: "Options",
   resetPreferences: "Reset to default settings",
+  hideColumn: "Hide column",
+  columnsMenu: "Columns",
   loadCsvTooltip: "First load CSV file",
   infoTitle: "Info:",
   infoTextPart1: "Download your collection from bgg as csv, then upload it here. It can be done from here, click ",
   infoTextClickHere: "here",
   infoTextPart2: " and input your user name.",
   howToUseTitle: "How to use:",
-  howToUseText: `When you upload csv file, you'll see a graph of weight vs average score from BGG and a table containing uploaded games.<br>The table can be sorted and filtered.<br>When you click on a row containing a game, it'll be highlighted on a graph.<br>In the options (on the right) you can uncheck displaying game extensions and add more info to the table.`,
+  howToUseText: `When you upload csv file, you'll see a graph of weight vs average score from BGG and a table containing uploaded games.<br>The table can be sorted and filtered.<br>When you click on a row containing a game, it'll be highlighted on a graph.<br>Columns can be shown or hidden via the ⋮ icon or right-click on a column header, or from the options panel (on the right).<br>Use the filter bar to include or exclude base games and expansions.`,
 
   chartTitle: "BGG Rating vs Complexity",
   chartXAxis: "Weight (complexity)",
