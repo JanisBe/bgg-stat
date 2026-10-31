@@ -70,6 +70,7 @@
         (columnVisible)="onColumnVisible($event)" (filterChanged)="onFilterChanged()" (gridReady)="onGridReady($event)"
         (rowClicked)="onRowClicked($event)" (rowDoubleClicked)="onRowDoubleClicked($event)"
         (sortChanged)="onGridStateChanged()" [columnDefs]="columnDefs" [columnHoverHighlight]="true"
+        [getRowStyle]="rowStyle" [gridOptions]="gridOptions" [rowData]="rowData"
         [class.ag-theme-alpine]="!isDarkMode" [class.ag-theme-alpine-dark]="isDarkMode"
         style="width: 95%; height: 500px; margin: 10px"></ag-grid-angular>
       }
