@@ -240,3 +240,129 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   max-width: 200px; /* Adjust as needed */
 }
+
+
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.theme-toggle-btn {
+  background: #f8f9fa;
+  border: 1px solid darkcyan;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  padding: 0;
+  user-select: none;
+
+  &:hover {
+    background: #e6f7f7;
+    transform: scale(1.08);
+  }
+}
+
+
+.container.dark-theme {
+  color: #e0e0e0;
+
+  .theme-toggle-btn {
+    background: #2b3035;
+    border-color: #00a8a8;
+    color: #ffd43b;
+
+    &:hover {
+      background: #373e45;
+    }
+  }
+
+  .file-date {
+    color: #9aa0a6;
+  }
+
+  .bold {
+    color: #63b3ed;
+  }
+
+  .controls-row {
+    .upload, .filter-bar, .options {
+      background: #24282c;
+      border-color: #008b8b;
+      color: #e0e0e0;
+
+      input[type="file"] {
+        color: #e0e0e0;
+      }
+    }
+
+    #options-container {
+      background-color: #24282c;
+      border-color: #008b8b;
+      color: #e0e0e0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  .reset-item {
+    border-bottom: 1px solid #444;
+
+    button {
+      background: #2e343a;
+      border-color: darkcyan;
+      color: #e0e0e0;
+
+      &:hover {
+        background: #3b424a;
+      }
+    }
+  }
+
+  .column-menu-popup {
+    background: #24282c;
+    border-color: #008b8b;
+    color: #e0e0e0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+
+    .column-menu-action {
+      color: #e0e0e0;
+
+      &:hover {
+        background: #2f353b;
+      }
+    }
+
+    .column-menu-separator {
+      background: #444;
+    }
+
+    .column-menu-title {
+      color: #aaa;
+    }
+
+    .column-menu-item:hover {
+      background: #2f353b;
+    }
+  }
+
+  .ag-header-cell:hover .ag-header-cell-text {
+    background-color: #24282c;
+    color: #e0e0e0;
+    border-color: #444;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  h1, h2 {
+    color: #f1f3f4;
+  }
+}

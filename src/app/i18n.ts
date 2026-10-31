@@ -17,6 +17,8 @@ export interface TranslationKeys {
   infoTextPart2: string;
   howToUseTitle: string;
   howToUseText: string;
+  switchToDark: string;
+  switchToLight: string;
 
   // Script-based translations
   chartTitle: string;
@@ -47,6 +49,8 @@ export const translationsPl: TranslationKeys = {
   infoTextPart2: " i wpisując nazwę użytkownika.",
   howToUseTitle: "Sposób obsługi:",
   howToUseText: `Gdy wgrasz plik csv, wyświetli się wykres ciężar (weight) vs średnia ocena z BGG oraz tabelka z wczytanymi grami.<br>Tabelkę można sortować oraz filtrować.<br>Gdy klikniesz w wiersz zawierający jakąś grę, podświetli się ona na wykresie.<br>Kolumny można ukrywać i pokazywać przez ikonę ⋮ lub PPM na nagłówku kolumny, albo w opcjach (po prawej).<br>W filtrze można odhaczyć pokazywanie gier podstawowych i dodatków.`,
+  switchToDark: "Przełącz na tryb ciemny",
+  switchToLight: "Przełącz na tryb jasny",
 
   chartTitle: "Ocena na BGG vs Trudność",
   chartXAxis: "Ciężar (trudność)",
@@ -76,6 +80,8 @@ export const translationsEn: TranslationKeys = {
   infoTextPart2: " and input your user name.",
   howToUseTitle: "How to use:",
   howToUseText: `When you upload csv file, you'll see a graph of weight vs average score from BGG and a table containing uploaded games.<br>The table can be sorted and filtered.<br>When you click on a row containing a game, it'll be highlighted on a graph.<br>Columns can be shown or hidden via the ⋮ icon or right-click on a column header, or from the options panel (on the right).<br>Use the filter bar to include or exclude base games and expansions.`,
+  switchToDark: "Switch to dark mode",
+  switchToLight: "Switch to light mode",
 
   chartTitle: "BGG Rating vs Complexity",
   chartXAxis: "Weight (complexity)",

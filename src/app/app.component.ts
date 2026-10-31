@@ -53,9 +53,13 @@ const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', '
 })
 export class AppComponent {
   t = t;
+  isDarkMode: boolean = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
   chart: Chart | undefined;
   chartOptions: Highcharts.Options = {
     chart: { type: 'scatter', height: 800 },
+    palette: {
+      colorScheme: typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    } as any,
     title: { text: t.chartTitle },
     xAxis: { title: { text: t.chartXAxis } },
     yAxis: { title: { text: t.chartYAxis } },
@@ -174,6 +178,29 @@ export class AppComponent {
   ) {
     this.columnMenuService.open$.subscribe(request => this.openColumnMenu(request));
     this.applyStoredPreferences();
+    this.applyThemeToChart();
+  }
+
+  toggleDarkMode(): void {
+    this.isDarkMode = !this.isDarkMode;
+    this.applyThemeToChart();
+    if (this.gridApi) {
+      this.gridApi.redrawRows();
+    }
+    this.scheduleSavePreferences();
+  }
+
+  private applyThemeToChart(): void {
+    (this.chartOptions as any).palette = {
+      colorScheme: this.isDarkMode ? 'dark' : 'light'
+    };
+    if (this.chart) {
+      this.chart.update({
+        palette: {
+          colorScheme: this.isDarkMode ? 'dark' : 'light'
+        }
+      } as any, true);
+    }
   }
 
   getTranslation(key: string): string {
@@ -185,9 +212,9 @@ export class AppComponent {
 
   rowStyle: ((params: RowClassParams) => (RowStyle | undefined)) | undefined = (params) => {
     if (params.data.itemtype == 'expansion') {
-      return { background: '#c8c8c8' };
+      return { background: this.isDarkMode ? '#3a4046' : '#c8c8c8' };
     }
-    return { background: '#ececec' };
+    return { background: this.isDarkMode ? '#22262a' : '#ececec' };
   };
 
   async onFileUpload(event: any) {
@@ -319,6 +346,9 @@ export class AppComponent {
       return;
     }
 
+    if (prefs.darkMode !== undefined) {
+      this.isDarkMode = prefs.darkMode;
+    }
     if (prefs.showStandalone !== undefined) {
       this.showStandalone = prefs.showStandalone;
     }
@@ -356,6 +386,7 @@ export class AppComponent {
       showExpansions: this.showExpansions,
       filterModel: this.gridApi.getFilterModel(),
       columnState,
+      darkMode: this.isDarkMode,
     };
 
     saveUiPreferences(prefs);
@@ -371,6 +402,7 @@ export class AppComponent {
       showExpansions: this.showExpansions,
       filterModel: this.pendingFilterModel,
       columnState: this.pendingColumnState ?? [],
+      darkMode: this.isDarkMode,
     };
 
     saveUiPreferences(prefs);
@@ -384,6 +416,8 @@ export class AppComponent {
     this.pendingColumnState = null;
     this.showStandalone = true;
     this.showExpansions = true;
+    this.isDarkMode = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
+    this.applyThemeToChart();
 
     this.checkboxOptions = Object.keys(tableConfig).map(key => ({
       key,
@@ -399,6 +433,7 @@ export class AppComponent {
         this.gridApi.resetColumnState();
         this.gridApi.setFilterModel(null);
         this.gridApi.onFilterChanged();
+        this.gridApi.redrawRows();
       }
 
       const dataPoints = this.extractData();
@@ -531,6 +566,9 @@ export class AppComponent {
   updateChart(dataPoints: DataPoint[], expansions: DataPoint[]): void {
     this.chartOptions = {
       ...this.chartOptions,
+      palette: {
+        colorScheme: this.isDarkMode ? 'dark' : 'light'
+      } as any,
       series: [
         {
           type: 'scatter',

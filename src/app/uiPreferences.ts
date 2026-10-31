@@ -8,6 +8,7 @@ export interface UiPreferences {
   showExpansions: boolean;
   filterModel: Record<string, unknown> | null;
   columnState: ColumnState[];
+  darkMode?: boolean;
 }
 
 export function hasUiPreferences(): boolean {
