@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, ChangeDetectionStrategy} from '@angular/core';
 import {IHeaderParams} from 'ag-grid-community';
 import {ColumnMenuService} from './column-menu.service';
 
@@ -46,6 +46,7 @@ import {ColumnMenuService} from './column-menu.service';
       color: #000;
     }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
 })
 export class InnerHeaderComponent {

@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'src/assets/collection.csv'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'angular.json'
+      - 'tsconfig*.json'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 permissions:

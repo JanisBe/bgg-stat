@@ -1,4 +1,4 @@
-import {Component, HostListener, ViewChild} from '@angular/core';
+import {Component, HostListener, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import * as Papa from 'papaparse';
 import {ParseResult} from 'papaparse';
 import * as Highcharts from 'highcharts';
@@ -48,6 +48,7 @@ const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', '
     FormsModule,
     AgGridAngular,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
 })
 export class AppComponent {
