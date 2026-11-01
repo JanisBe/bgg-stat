@@ -7,6 +7,7 @@ import {
   ViewChild,
   effect,
   input,
+  output,
 } from '@angular/core';
 import * as Highcharts from 'highcharts';
 import { Chart } from 'highcharts';
@@ -36,11 +37,11 @@ const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', '
     }
 
     .graph {
-      margin: 20px 0;
+      margin: 10px 0;
     }
 
     #hcContainer {
-      width: 95%;
+      width: 100%;
       height: 100%;
       display: block;
     }
@@ -51,9 +52,12 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
 
   readonly t = getActiveTranslations();
   readonly isDarkMode = input<boolean>(false);
+  readonly isMobile = input<boolean>(false);
   readonly gamesData = input<DataPoint[]>([]);
   readonly expansionsData = input<DataPoint[]>([]);
   readonly visibleColumns = input<Set<string>>(new Set());
+
+  readonly pointSelected = output<DataPoint>();
 
   private chart?: Chart;
   private isViewReady = false;
@@ -63,6 +67,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       // Register reactivity dependencies
       this.isDarkMode();
+      this.isMobile();
       this.gamesData();
       this.expansionsData();
       this.visibleColumns();
@@ -111,12 +116,25 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
   }
 
   private buildChartOptions(): Highcharts.Options {
+    const self = this;
     const isDark = this.isDarkMode();
+    const isMobileDevice = this.isMobile();
     const games = this.processPoints(this.gamesData());
     const expansions = this.processPoints(this.expansionsData());
 
     return {
-      chart: { type: 'scatter', height: 800 },
+      chart: {
+        type: 'scatter',
+        height: isMobileDevice ? 400 : 700,
+        zooming: {
+          type: 'xy'
+        },
+        panning: {
+          enabled: true,
+          type: 'xy'
+        },
+        panKey: 'shift'
+      },
       palette: {
         colorScheme: isDark ? 'dark' : 'light'
       } as any,
@@ -161,13 +179,13 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
       plotOptions: {
         scatter: {
           marker: {
-            radius: 2.5,
+            radius: isMobileDevice ? 3.5 : 2.5,
             states: {
               select: {
                 fillColor: 'red',
                 lineColor: 'black',
                 lineWidth: 2,
-                radius: 6
+                radius: isMobileDevice ? 7 : 6
               }
             }
           },
@@ -179,10 +197,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
             events: {
               click: function () {
                 const options = this.options as any;
-                const url = options['url'];
-                if (url) {
-                  window.open(url, '_blank');
-                }
+                self.pointSelected.emit(options);
               },
             },
           },

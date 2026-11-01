@@ -70,11 +70,11 @@ export const gridOptions: GridOptions = {
   },
   autoSizeStrategy: {
     type: 'fitGridWidth',
-    defaultMinWidth: 100,
+    defaultMinWidth: 80,
     columnLimits: [
       {
         colId: 'objectname',
-        minWidth: 350
+        minWidth: 200
       }
     ]
   },

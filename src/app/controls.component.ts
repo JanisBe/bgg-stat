@@ -11,8 +11,12 @@ import { CheckboxOption } from './models';
   template: `
     <div class="controls-row" [class.dark-theme]="isDarkMode()">
       <div class="upload">
-        <input (change)="onFileChange($event)" accept="text/csv" type="file" />
-        {{ t.or }}
+        <label class="file-btn">
+          <span class="file-icon">📁</span>
+          <span>{{ t.chooseFile }}</span>
+          <input (change)="onFileChange($event)" accept="text/csv" type="file" />
+        </label>
+        <span class="or-text">{{ t.or }}</span>
         <p (click)="loadExample.emit()" class="myCSV bold">{{ t.useMyCsv }}</p>
       </div>
 
@@ -20,7 +24,7 @@ import { CheckboxOption } from './models';
         <div class="filter-bar">
           <div class="filter-group">
             <strong>{{ t.filter }}</strong>
-            <label class="filter-item">
+            <label class="filter-item" [class.active]="showStandalone()">
               <input
                 (change)="onToggleStandalone($event)"
                 [checked]="showStandalone()"
@@ -28,7 +32,7 @@ import { CheckboxOption } from './models';
               />
               {{ t.baseGames }}
             </label>
-            <label class="filter-item">
+            <label class="filter-item" [class.active]="showExpansions()">
               <input
                 (change)="onToggleExpansions($event)"
                 [checked]="showExpansions()"
@@ -41,13 +45,14 @@ import { CheckboxOption } from './models';
 
         <div class="options" style="position: relative;">
           <div (click)="toggleOptions()" class="tooltip">
-            {{ t.options }}
+            ⚙️ {{ t.options }}
             @if (!dataLoaded()) {
               <span class="tooltiptext">{{ t.loadCsvTooltip }}</span>
             }
           </div>
 
           @if (isExpanded()) {
+            <div class="options-backdrop" (click)="isExpanded.set(false)"></div>
             <div (mouseleave)="isExpanded.set(false)" id="options-container">
               @if (hasSavedPreferences()) {
                 <div class="option-item reset-item">
@@ -81,6 +86,44 @@ import { CheckboxOption } from './models';
 
     .myCSV {
       display: inline;
+      margin: 0;
+    }
+
+    .or-text {
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .file-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: darkcyan;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #ffffff;
+      border: 1px solid darkcyan;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      min-height: 28px;
+      box-sizing: border-box;
+
+      &:hover {
+        background: #f0fdfa;
+      }
+
+      input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+      }
     }
 
     .controls-row {
@@ -94,15 +137,15 @@ import { CheckboxOption } from './models';
         display: flex;
         align-items: center;
         border: 1px solid darkcyan;
-        padding: 8px 12px;
+        padding: 6px 12px;
         border-radius: 8px;
         background: #f8f9fa;
-        height: 40px;
+        min-height: 40px;
         box-sizing: border-box;
       }
 
       .upload {
-        gap: 10px;
+        gap: 8px;
       }
 
       .filter-bar {
@@ -113,15 +156,27 @@ import { CheckboxOption } from './models';
         .filter-group {
           display: flex;
           align-items: center;
-          gap: 15px;
+          gap: 12px;
+          flex-wrap: wrap;
         }
 
         .filter-item {
-          display: flex;
+          display: inline-flex;
           align-items: center;
-          gap: 5px;
+          gap: 6px;
           cursor: pointer;
           user-select: none;
+          padding: 4px 8px;
+          border-radius: 6px;
+          transition: background-color 0.15s ease;
+
+          &:hover {
+            background: #e6f7f7;
+          }
+
+          &.active {
+            font-weight: 600;
+          }
         }
       }
 
@@ -129,7 +184,14 @@ import { CheckboxOption } from './models';
         cursor: pointer;
         position: relative;
         justify-content: center;
+        user-select: none;
       }
+    }
+
+    .options-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 99;
     }
 
     .option-item {
@@ -148,7 +210,7 @@ import { CheckboxOption } from './models';
       button {
         width: 100%;
         cursor: pointer;
-        padding: 4px 8px;
+        padding: 6px 8px;
         font-family: inherit;
         font-size: 12px;
         background: #fff;
@@ -163,8 +225,9 @@ import { CheckboxOption } from './models';
 
     .tooltip {
       position: relative;
-      display: inline-block;
-      border-bottom: 1px dotted black;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .tooltip .tooltiptext {
@@ -176,7 +239,7 @@ import { CheckboxOption } from './models';
       border-radius: 6px;
       padding: 5px 0;
       position: absolute;
-      z-index: 1;
+      z-index: 101;
       top: -5px;
       right: 110%;
     }
@@ -202,11 +265,34 @@ import { CheckboxOption } from './models';
       top: 100%;
       right: 0;
       background-color: white;
-      z-index: 10;
+      z-index: 100;
       padding: 10px;
       border: 1px solid #ccc;
+      border-radius: 8px;
       max-height: 400px;
+      min-width: 220px;
       overflow-y: auto;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    @media (max-width: 640px) {
+      .controls-row {
+        flex-direction: column;
+        align-items: stretch;
+
+        .upload, .filter-bar, .options {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      #options-container {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90vw;
+        max-width: 320px;
+      }
     }
 
     .controls-row.dark-theme {
@@ -214,14 +300,28 @@ import { CheckboxOption } from './models';
         color: #63b3ed;
       }
 
+      .or-text {
+        color: #94a3b8;
+      }
+
+      .file-btn {
+        background: #2e343a;
+        border-color: #008b8b;
+        color: #38bdf8;
+
+        &:hover {
+          background: #374151;
+        }
+      }
+
       .upload, .filter-bar, .options {
         background: #24282c;
         border-color: #008b8b;
         color: #e0e0e0;
+      }
 
-        input[type="file"] {
-          color: #e0e0e0;
-        }
+      .filter-bar .filter-item:hover {
+        background: #2f383e;
       }
 
       #options-container {

@@ -28,6 +28,29 @@ export interface TranslationKeys {
   chartSeriesExpansions: string;
   enterNamePrompt: string;
   csvErrorAlert: string;
+
+  // Mobile & Cards additions
+  viewChart: string;
+  viewCards: string;
+  viewTable: string;
+  viewInfo: string;
+  openInBgg: string;
+  weight: string;
+  rating: string;
+  players: string;
+  playTime: string;
+  searchPlaceholder: string;
+  selectedGame: string;
+  close: string;
+  chooseFile: string;
+  sortBy: string;
+  sortRating: string;
+  sortWeight: string;
+  sortName: string;
+  sortRank: string;
+  minutes: string;
+  showMore: string;
+  tapToHighlight: string;
 }
 
 export const translationsPl: TranslationKeys = {
@@ -59,6 +82,28 @@ export const translationsPl: TranslationKeys = {
   chartSeriesExpansions: "Dodatki",
   enterNamePrompt: "Wpisz swoją nazwę użytkownika BGG:",
   csvErrorAlert: "Problem z plikiem CSV, czy na pewno pochodzi z BGG?",
+
+  viewChart: "Wykres",
+  viewCards: "Karty",
+  viewTable: "Tabela",
+  viewInfo: "Pomoc",
+  openInBgg: "Otwórz na BGG",
+  weight: "Ciężar",
+  rating: "Ocena",
+  players: "Gracze",
+  playTime: "Czas",
+  searchPlaceholder: "Szukaj gry...",
+  selectedGame: "Wybrana gra",
+  close: "Zamknij",
+  chooseFile: "Wybierz plik CSV",
+  sortBy: "Sortuj wg",
+  sortRating: "Oceny (najwyższa)",
+  sortWeight: "Trudności (najwyższa)",
+  sortName: "Nazwy (A-Z)",
+  sortRank: "Rankingu BGG",
+  minutes: "min",
+  showMore: "Pokaż więcej",
+  tapToHighlight: "Dotknij punktu na wykresie, aby zobaczyć szczegóły gry.",
 };
 
 export const translationsEn: TranslationKeys = {
@@ -90,6 +135,28 @@ export const translationsEn: TranslationKeys = {
   chartSeriesExpansions: "Expansions",
   enterNamePrompt: "Enter your BGG username:",
   csvErrorAlert: "Problem with CSV file, is it for sure from BGG?",
+
+  viewChart: "Chart",
+  viewCards: "Cards",
+  viewTable: "Table",
+  viewInfo: "Info",
+  openInBgg: "Open on BGG",
+  weight: "Weight",
+  rating: "Rating",
+  players: "Players",
+  playTime: "Time",
+  searchPlaceholder: "Search game...",
+  selectedGame: "Selected game",
+  close: "Close",
+  chooseFile: "Choose CSV file",
+  sortBy: "Sort by",
+  sortRating: "Rating (highest)",
+  sortWeight: "Weight (highest)",
+  sortName: "Name (A-Z)",
+  sortRank: "BGG Rank",
+  minutes: "min",
+  showMore: "Show more",
+  tapToHighlight: "Tap a point on the chart to view game details.",
 };
 
 export function getActiveTranslations(): TranslationKeys {

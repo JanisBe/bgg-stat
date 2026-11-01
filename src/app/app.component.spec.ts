@@ -73,4 +73,26 @@ describe('AppComponent', () => {
     expect(app.showStandalone()).toBeTrue();
     expect(app.showExpansions()).toBeFalse();
   });
+
+  it('should switch activeTab when setActiveTab is called', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+
+    expect(app.activeTab()).toBe('chart');
+    app.setActiveTab('cards');
+    expect(app.activeTab()).toBe('cards');
+    app.setActiveTab('table');
+    expect(app.activeTab()).toBe('table');
+  });
+
+  it('should clear selected game on clearSelectedGame', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+
+    app.selectedGame.set({ objectname: 'Catan', x: 2.3, y: 7.2 } as any);
+    expect(app.selectedGame()).toBeTruthy();
+
+    app.clearSelectedGame();
+    expect(app.selectedGame()).toBeNull();
+  });
 });

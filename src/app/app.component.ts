@@ -3,6 +3,7 @@ import {
   Component,
   HostListener,
   ViewChild,
+  computed,
   signal,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -41,6 +42,8 @@ import { ControlsComponent } from './controls.component';
 import { ChartComponent } from './chart.component';
 import { ColumnMenuComponent } from './column-menu.component';
 import { InfoSectionComponent } from './info-section.component';
+import { GameCardListComponent } from './game-card-list.component';
+import { SelectedGamePreviewComponent } from './selected-game-preview.component';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 provideGlobalGridOptions({ theme: 'legacy' });
@@ -57,6 +60,8 @@ const t = getActiveTranslations();
     ChartComponent,
     ColumnMenuComponent,
     InfoSectionComponent,
+    GameCardListComponent,
+    SelectedGamePreviewComponent,
   ],
   template: `
     <div class="container" [class.dark-theme]="isDarkMode()">
@@ -98,41 +103,130 @@ const t = getActiveTranslations();
           (resetPreferences)="resetPreferences()"
         />
 
-        <app-chart
-          #chartComp
-          [gamesData]="gamesPoints()"
-          [expansionsData]="expansionPoints()"
-          [visibleColumns]="visibleColumns()"
-          [isDarkMode]="isDarkMode()"
-        />
-      </div>
-
-      <div>
         @if (dataLoaded()) {
-          <ag-grid-angular
-            #agGrid
-            (columnHeaderContextMenu)="onColumnHeaderContextMenu($event)"
-            (columnMoved)="onGridStateChanged()"
-            (columnResized)="onGridStateChanged()"
-            (columnVisible)="onColumnVisible($event)"
-            (filterChanged)="onFilterChanged()"
-            (gridReady)="onGridReady($event)"
-            (rowClicked)="onRowClicked($event)"
-            (rowDoubleClicked)="onRowDoubleClicked($event)"
-            (sortChanged)="onGridStateChanged()"
-            [columnDefs]="columnDefs()"
-            [columnHoverHighlight]="true"
-            [getRowStyle]="rowStyle"
-            [gridOptions]="gridOptions"
-            [rowData]="rowData()"
-            [class.ag-theme-alpine]="!isDarkMode()"
-            [class.ag-theme-alpine-dark]="isDarkMode()"
-            style="width: 95%; height: 500px; margin: 10px"
-          />
+          <div class="view-tabs" role="tablist">
+            <button
+              type="button"
+              class="tab-btn"
+              [class.active]="activeTab() === 'chart'"
+              (click)="setActiveTab('chart')"
+              role="tab"
+              [attr.aria-selected]="activeTab() === 'chart'"
+            >
+              📈 {{ t.viewChart }}
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              [class.active]="activeTab() === 'cards'"
+              (click)="setActiveTab('cards')"
+              role="tab"
+              [attr.aria-selected]="activeTab() === 'cards'"
+            >
+              🎴 {{ t.viewCards }}
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              [class.active]="activeTab() === 'table'"
+              (click)="setActiveTab('table')"
+              role="tab"
+              [attr.aria-selected]="activeTab() === 'table'"
+            >
+              📋 {{ t.viewTable }}
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              [class.active]="activeTab() === 'info'"
+              (click)="setActiveTab('info')"
+              role="tab"
+              [attr.aria-selected]="activeTab() === 'info'"
+            >
+              ℹ️ {{ t.viewInfo }}
+            </button>
+          </div>
         }
-      </div>
 
-      <app-info-section [isDarkMode]="isDarkMode()" />
+        <div class="main-content">
+          <!-- Chart section -->
+          <div
+            class="content-section chart-section"
+            [class.hidden-on-mobile]="isMobile() && activeTab() !== 'chart'"
+          >
+            <app-chart
+              #chartComp
+              [gamesData]="gamesPoints()"
+              [expansionsData]="expansionPoints()"
+              [visibleColumns]="visibleColumns()"
+              [isDarkMode]="isDarkMode()"
+              [isMobile]="isMobile()"
+              (pointSelected)="onChartPointSelected($event)"
+            />
+
+            @if (selectedGame()) {
+              <app-selected-game-preview
+                [game]="selectedGame()"
+                [isDarkMode]="isDarkMode()"
+                (close)="clearSelectedGame()"
+                (openBgg)="openBggPage($event)"
+              />
+            }
+          </div>
+
+          <!-- Cards view -->
+          @if (dataLoaded() && (activeTab() === 'cards' || (isMobile() && activeTab() === 'cards'))) {
+            <div class="content-section cards-section">
+              <app-game-card-list
+                [games]="allActiveGames()"
+                [isDarkMode]="isDarkMode()"
+                [selectedObjectId]="selectedGame()?.objectid"
+                (gameSelected)="onCardGameSelected($event)"
+                (openBgg)="openBggPage($event)"
+              />
+            </div>
+          }
+
+          <!-- AG-Grid Table view -->
+          @if (dataLoaded()) {
+            <div
+              class="content-section table-section"
+              [class.hidden-on-mobile]="isMobile() && activeTab() !== 'table'"
+              [class.hidden-on-desktop]="!isMobile() && activeTab() === 'cards'"
+            >
+              <ag-grid-angular
+                #agGrid
+                (columnHeaderContextMenu)="onColumnHeaderContextMenu($event)"
+                (columnMoved)="onGridStateChanged()"
+                (columnResized)="onGridStateChanged()"
+                (columnVisible)="onColumnVisible($event)"
+                (filterChanged)="onFilterChanged()"
+                (gridReady)="onGridReady($event)"
+                (rowClicked)="onRowClicked($event)"
+                (rowDoubleClicked)="onRowDoubleClicked($event)"
+                (sortChanged)="onGridStateChanged()"
+                [columnDefs]="columnDefs()"
+                [columnHoverHighlight]="true"
+                [getRowStyle]="rowStyle"
+                [gridOptions]="gridOptions"
+                [rowData]="rowData()"
+                [class.ag-theme-alpine]="!isDarkMode()"
+                [class.ag-theme-alpine-dark]="isDarkMode()"
+                class="grid-container"
+              />
+            </div>
+          }
+
+          <!-- Info Section -->
+          <div
+            class="content-section info-section-wrapper"
+            [class.hidden-on-mobile]="isMobile() && activeTab() !== 'info'"
+            [class.hidden-on-desktop]="!isMobile() && activeTab() === 'cards'"
+          >
+            <app-info-section [isDarkMode]="isDarkMode()" />
+          </div>
+        </div>
+      </div>
 
       <app-column-menu
         [isOpen]="columnMenuState().open"
@@ -152,6 +246,9 @@ const t = getActiveTranslations();
       margin: 10px;
       font-family: "Unica One", arial, helvetica, sans-serif, serif;
       position: relative;
+      max-width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .file-date {
@@ -165,15 +262,18 @@ const t = getActiveTranslations();
     .header-row {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 15px;
 
       h1 {
         margin: 0;
+        font-size: 1.8rem;
       }
     }
 
     .displayed-games {
       margin-top: 5px;
+      font-size: 0.95rem;
     }
 
     .theme-toggle-btn {
@@ -194,6 +294,83 @@ const t = getActiveTranslations();
       &:hover {
         background: #e6f7f7;
         transform: scale(1.08);
+      }
+    }
+
+    .view-tabs {
+      display: flex;
+      gap: 6px;
+      margin: 14px 0 10px 0;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 75px;
+      min-height: 40px;
+      padding: 8px 10px;
+      border: none;
+      background: transparent;
+      color: #475569;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.6);
+        color: #0f172a;
+      }
+
+      &.active {
+        background: #ffffff;
+        color: darkcyan;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        font-weight: 700;
+      }
+    }
+
+    .main-content {
+      margin-top: 10px;
+    }
+
+    .content-section {
+      width: 100%;
+    }
+
+    .grid-container {
+      width: 100%;
+      height: 520px;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 767px) {
+      .hidden-on-mobile {
+        display: none !important;
+      }
+
+      .file-date {
+        position: static;
+        text-align: right;
+        margin-bottom: 4px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .hidden-on-desktop {
+        display: none !important;
       }
     }
 
@@ -228,6 +405,26 @@ const t = getActiveTranslations();
         color: #9aa0a6;
       }
 
+      .view-tabs {
+        background: #1e2226;
+        border-color: #33393f;
+
+        .tab-btn {
+          color: #94a3b8;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #f1f5f9;
+          }
+
+          &.active {
+            background: #2b3035;
+            color: #38bdf8;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+          }
+        }
+      }
+
       .ag-header-cell:hover .ag-header-cell-text {
         background-color: #24282c;
         color: #e0e0e0;
@@ -250,6 +447,12 @@ export class AppComponent {
       : false
   );
 
+  readonly isMobile = signal<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  readonly activeTab = signal<'chart' | 'cards' | 'table' | 'info'>('chart');
+  readonly selectedGame = signal<any | null>(null);
+
   readonly fileDate = signal<string | undefined>(undefined);
   readonly counter = signal<number>(0);
   readonly dataLoaded = signal<boolean>(false);
@@ -264,6 +467,11 @@ export class AppComponent {
 
   readonly gamesPoints = signal<DataPoint[]>([]);
   readonly expansionPoints = signal<DataPoint[]>([]);
+
+  readonly allActiveGames = computed(() => [
+    ...this.gamesPoints(),
+    ...this.expansionPoints(),
+  ]);
 
   readonly checkboxOptions = signal<CheckboxOption[]>(this.buildInitialCheckboxOptions());
 
@@ -371,8 +579,8 @@ export class AppComponent {
     const expansion: DataPoint[] = [];
 
     data.forEach((row) => {
-      const average = +Number.parseFloat(row['average']).toFixed(3);
-      const avgWeight = +Number.parseFloat(row['avgweight']).toFixed(3);
+      const average = +Number.parseFloat(String(row['average'])).toFixed(3);
+      const avgWeight = +Number.parseFloat(String(row['avgweight'])).toFixed(3);
       const objectName = row['objectname'];
       const objectid = row['objectid'];
 
@@ -407,6 +615,58 @@ export class AppComponent {
     return [dataPoints, expansion];
   }
 
+  setActiveTab(tab: 'chart' | 'cards' | 'table' | 'info'): void {
+    this.activeTab.set(tab);
+    if (tab === 'chart') {
+      setTimeout(() => {
+        this.chartComp?.renderOrUpdateChart();
+      }, 50);
+    }
+  }
+
+  onChartPointSelected(point: any): void {
+    const objectId = point.objectid;
+    if (!objectId) return;
+
+    const all = this.allActiveGames();
+    const game = all.find((g) => g.objectid === objectId) || point;
+    this.selectedGame.set(game);
+    this.chartComp?.selectPointByObjectId(objectId);
+
+    if (this.gridApi) {
+      this.gridApi.forEachNode((node) => {
+        if (node.data?.objectid === objectId) {
+          node.setSelected(true);
+        } else {
+          node.setSelected(false);
+        }
+      });
+    }
+  }
+
+  onCardGameSelected(game: DataPoint): void {
+    this.selectedGame.set(game);
+    this.chartComp?.selectPointByObjectId(game.objectid);
+
+    if (this.gridApi) {
+      this.gridApi.forEachNode((node) => {
+        if (node.data?.objectid === game.objectid) {
+          node.setSelected(true);
+        } else {
+          node.setSelected(false);
+        }
+      });
+    }
+  }
+
+  clearSelectedGame(): void {
+    this.selectedGame.set(null);
+    this.chartComp?.clearSelection();
+    if (this.gridApi) {
+      this.gridApi.deselectAll();
+    }
+  }
+
   onRowClicked(event: RowClickedEvent): void {
     const objectId = event.data.objectid;
 
@@ -415,6 +675,7 @@ export class AppComponent {
       return;
     }
 
+    this.selectedGame.set(event.data);
     this.chartComp?.selectPointByObjectId(objectId);
   }
 
@@ -434,7 +695,7 @@ export class AppComponent {
     return isDoubleTap;
   }
 
-  private openBggPage(objectId: string | number | undefined): void {
+  openBggPage(objectId: string | number | undefined): void {
     if (objectId) {
       window.open(this.link + objectId, '_blank');
     }
@@ -859,8 +1120,9 @@ export class AppComponent {
   }
 
   private checkScreenSize(): void {
-    if (!this.gridApi) return;
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    this.isMobile.set(isMobile);
+    if (!this.gridApi) return;
     this.gridApi.setColumnsPinned(['objectname'], isMobile ? null : 'left');
   }
 
