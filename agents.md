@@ -64,10 +64,14 @@ The CSV is validated on load: the parser checks that the file has exactly **58 c
 ```
 src/
 ├── app/
-│   ├── app.component.ts         # Main component – all logic lives here
-│   ├── app.component.html       # Template with chart + grid
-│   ├── app.component.scss       # Styles
+│   ├── app.component.ts         # Main orchestrator component (Single File Component: Signals & OnPush)
+│   ├── chart.component.ts       # Scatter chart component (Highcharts)
+│   ├── controls.component.ts    # Filter bar, file upload & options dropdown
+│   ├── column-menu.component.ts # Column visibility popup context menu
+│   ├── info-section.component.ts# Information & how-to guide section
+│   ├── models.ts                # Shared models (DataPoint, CheckboxOption, etc.)
 │   ├── tableConfig.ts           # Column definitions & AG-Grid options
+│   ├── inner-header.component.ts# Custom header with column menu trigger
 │   └── header-tooltip.component # Custom header tooltip component
 ├── assets/
 │   └── collection.csv           # Bundled example collection (the owner's BGG collection)

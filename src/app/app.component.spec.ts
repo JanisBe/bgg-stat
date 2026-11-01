@@ -20,8 +20,8 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
-    expect(app.showStandalone).toBeTrue();
-    expect(app.showExpansions).toBeFalse();
+    expect(app.showStandalone()).toBeTrue();
+    expect(app.showExpansions()).toBeFalse();
   });
 
   it('should render title heading', () => {
@@ -42,8 +42,8 @@ describe('AppComponent', () => {
 
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.showStandalone).toBeTrue();
-    expect(app.showExpansions).toBeFalse();
+    expect(app.showStandalone()).toBeTrue();
+    expect(app.showExpansions()).toBeFalse();
   });
 
   it('should preserve expansions when explicitly stored in preferences', () => {
@@ -57,20 +57,20 @@ describe('AppComponent', () => {
 
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.showStandalone).toBeTrue();
-    expect(app.showExpansions).toBeTrue();
+    expect(app.showStandalone()).toBeTrue();
+    expect(app.showExpansions()).toBeTrue();
   });
 
   it('should reset filter to base games on resetPreferences', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
 
-    app.showStandalone = false;
-    app.showExpansions = true;
+    app.showStandalone.set(false);
+    app.showExpansions.set(true);
 
     app.resetPreferences();
 
-    expect(app.showStandalone).toBeTrue();
-    expect(app.showExpansions).toBeFalse();
+    expect(app.showStandalone()).toBeTrue();
+    expect(app.showExpansions()).toBeFalse();
   });
 });

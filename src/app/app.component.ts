@@ -1,9 +1,13 @@
-import { Component, HostListener, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  ViewChild,
+  signal,
+} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import * as Papa from 'papaparse';
 import { ParseResult } from 'papaparse';
-import * as Highcharts from 'highcharts';
-import { Chart } from 'highcharts';
-import { FormsModule } from "@angular/forms";
 import {
   AllCommunityModule,
   ColDef,
@@ -16,132 +20,276 @@ import {
   RowClassParams,
   RowClickedEvent,
   RowDoubleClickedEvent,
-  RowStyle
-} from "ag-grid-community";
-import { AgGridAngular } from "ag-grid-angular";
-import { gridOptions, tableConfig } from "./tableConfig";
-import { ColumnMenuRequest, ColumnMenuService } from "./column-menu.service";
-import { InnerHeaderComponent } from "./inner-header.component";
-import { HttpClient } from "@angular/common/http";
-import { environment } from "../environments/environment";
-import { getActiveTranslations } from "./i18n";
+  RowStyle,
+} from 'ag-grid-community';
+import { AgGridAngular } from 'ag-grid-angular';
+
+import { gridOptions, tableConfig } from './tableConfig';
+import { ColumnMenuRequest, ColumnMenuService } from './column-menu.service';
+import { InnerHeaderComponent } from './inner-header.component';
+import { environment } from '../environments/environment';
+import { getActiveTranslations } from './i18n';
 import {
   clearUiPreferences,
   hasUiPreferences,
   loadUiPreferences,
   saveUiPreferences,
-  UiPreferences
-} from "./uiPreferences";
+  UiPreferences,
+} from './uiPreferences';
+import { CheckboxOption, ColumnMenuState, DataPoint } from './models';
+import { ControlsComponent } from './controls.component';
+import { ChartComponent } from './chart.component';
+import { ColumnMenuComponent } from './column-menu.component';
+import { InfoSectionComponent } from './info-section.component';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
-provideGlobalGridOptions({ theme: "legacy" });
+provideGlobalGridOptions({ theme: 'legacy' });
 
 const t = getActiveTranslations();
 
-const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', 'rating', 'weight', 'objectid']);
-
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
-  imports: [
-    FormsModule,
-    AgGridAngular,
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    AgGridAngular,
+    ControlsComponent,
+    ChartComponent,
+    ColumnMenuComponent,
+    InfoSectionComponent,
+  ],
+  template: `
+    <div class="container" [class.dark-theme]="isDarkMode()">
+      @if (fileDate()) {
+        <div class="file-date">{{ fileDate() }}</div>
+      }
+
+      <div>
+        <div class="header-row">
+          <h1>{{ t.title }}</h1>
+          <button
+            (click)="toggleDarkMode()"
+            class="theme-toggle-btn"
+            [title]="isDarkMode() ? t.switchToLight : t.switchToDark"
+            [attr.aria-label]="isDarkMode() ? t.switchToLight : t.switchToDark"
+            type="button"
+          >
+            {{ isDarkMode() ? '☀️' : '🌙' }}
+          </button>
+        </div>
+
+        @if (counter() !== 0) {
+          <div class="displayed-games">
+            {{ t.displayedGames.replace('{counter}', '' + counter()) }}
+          </div>
+        }
+
+        <app-controls
+          [dataLoaded]="dataLoaded()"
+          [hasSavedPreferences]="hasSavedPreferences()"
+          [checkboxOptions]="checkboxOptions()"
+          [isDarkMode]="isDarkMode()"
+          [(showStandalone)]="showStandalone"
+          [(showExpansions)]="showExpansions"
+          (fileSelected)="onFileUpload($event)"
+          (loadExample)="onLoadMyExample()"
+          (filterToggled)="onToggleFilters()"
+          (optionToggled)="onOptionToggled($event)"
+          (resetPreferences)="resetPreferences()"
+        />
+
+        <app-chart
+          #chartComp
+          [gamesData]="gamesPoints()"
+          [expansionsData]="expansionPoints()"
+          [visibleColumns]="visibleColumns()"
+          [isDarkMode]="isDarkMode()"
+        />
+      </div>
+
+      <div>
+        @if (dataLoaded()) {
+          <ag-grid-angular
+            #agGrid
+            (columnHeaderContextMenu)="onColumnHeaderContextMenu($event)"
+            (columnMoved)="onGridStateChanged()"
+            (columnResized)="onGridStateChanged()"
+            (columnVisible)="onColumnVisible($event)"
+            (filterChanged)="onFilterChanged()"
+            (gridReady)="onGridReady($event)"
+            (rowClicked)="onRowClicked($event)"
+            (rowDoubleClicked)="onRowDoubleClicked($event)"
+            (sortChanged)="onGridStateChanged()"
+            [columnDefs]="columnDefs()"
+            [columnHoverHighlight]="true"
+            [getRowStyle]="rowStyle"
+            [gridOptions]="gridOptions"
+            [rowData]="rowData()"
+            [class.ag-theme-alpine]="!isDarkMode()"
+            [class.ag-theme-alpine-dark]="isDarkMode()"
+            style="width: 95%; height: 500px; margin: 10px"
+          />
+        }
+      </div>
+
+      <app-info-section [isDarkMode]="isDarkMode()" />
+
+      <app-column-menu
+        [isOpen]="columnMenuState().open"
+        [x]="columnMenuState().x"
+        [y]="columnMenuState().y"
+        [colId]="columnMenuState().colId"
+        [options]="checkboxOptions()"
+        [isDarkMode]="isDarkMode()"
+        (close)="closeColumnMenu()"
+        (hideColumn)="hideColumnFromMenu($event)"
+        (toggleColumn)="toggleColumnFromMenu($event)"
+      />
+    </div>
+  `,
+  styles: [`
+    .container {
+      margin: 10px;
+      font-family: "Unica One", arial, helvetica, sans-serif, serif;
+      position: relative;
+    }
+
+    .file-date {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      font-size: 8px;
+      color: gray;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+
+      h1 {
+        margin: 0;
+      }
+    }
+
+    .displayed-games {
+      margin-top: 5px;
+    }
+
+    .theme-toggle-btn {
+      background: #f8f9fa;
+      border: 1px solid darkcyan;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      padding: 0;
+      user-select: none;
+
+      &:hover {
+        background: #e6f7f7;
+        transform: scale(1.08);
+      }
+    }
+
+    .ag-header-cell:hover .ag-header-cell-text {
+      position: absolute;
+      background-color: white;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      z-index: 10;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      max-width: 200px;
+    }
+
+    .container.dark-theme {
+      color: #e0e0e0;
+
+      .theme-toggle-btn {
+        background: #2b3035;
+        border-color: #00a8a8;
+        color: #ffd43b;
+
+        &:hover {
+          background: #373e45;
+        }
+      }
+
+      .file-date {
+        color: #9aa0a6;
+      }
+
+      .ag-header-cell:hover .ag-header-cell-text {
+        background-color: #24282c;
+        color: #e0e0e0;
+        border-color: #444;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      }
+
+      h1 {
+        color: #f1f3f4;
+      }
+    }
+  `],
 })
 export class AppComponent {
-  t = t;
-  isDarkMode: boolean = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
-  chart: Chart | undefined;
-  chartOptions: Highcharts.Options = {
-    chart: { type: 'scatter', height: 800 },
-    palette: {
-      colorScheme: typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    } as any,
-    title: { text: t.chartTitle },
-    xAxis: { title: { text: t.chartXAxis } },
-    yAxis: { title: { text: t.chartYAxis } },
-    tooltip: {
-      useHTML: true,
-      formatter: function () {
-        const point = this as Highcharts.Point;
-        let tooltip = `Name: <b>${point.name}</b><br>`;
-        const options = point.options as any;
-        for (let tooltipName of Object.keys(options)) {
-          if (!!options[tooltipName] && !NOT_DISPLAYED.has(tooltipName)) {
-            // @ts-ignore
-            tooltip += `${tooltipName}: <b>${point[tooltipName]}</b><br>`;
-          }
-        }
-        return tooltip;
-      }
-    },
-    series: [
-      {
-        type: 'scatter',
-        name: t.chartSeriesGames,
-        data: [],
-        color: 'rgba(5,141,199,0.5)'
-      },
-      {
-        type: 'scatter',
-        name: t.chartSeriesExpansions,
-        data: [],
-        color: 'rgba(237,86,27,0.5)'
-      },
-    ],
-    plotOptions: {
-      scatter: {
-        marker: {
-          radius: 2.5,
-          states: {
-            select: {
-              fillColor: 'red',
-              lineColor: 'black',
-              lineWidth: 2,
-              radius: 6
-            }
-          }
-        },
-        allowPointSelect: true
-      },
-      series: {
-        cursor: 'pointer',
-        point: {
-          events: {
-            click: function () {
-              let options = this.options as any;
-              const url = options['url'];
-              if (url) {
-                window.open(url, '_blank');
-              }
-            },
-          },
-        },
-      },
-    },
-  };
+  readonly t = t;
+
+  readonly isDarkMode = signal<boolean>(
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : false
+  );
+
+  readonly fileDate = signal<string | undefined>(undefined);
+  readonly counter = signal<number>(0);
+  readonly dataLoaded = signal<boolean>(false);
+  readonly hasSavedPreferences = signal<boolean>(hasUiPreferences());
+
+  readonly showStandalone = signal<boolean>(true);
+  readonly showExpansions = signal<boolean>(false);
+
+  readonly rowData = signal<any[]>([]);
+  readonly columnDefs = signal<ColDef[]>([]);
+  readonly visibleColumns = signal<Set<string>>(new Set());
+
+  readonly gamesPoints = signal<DataPoint[]>([]);
+  readonly expansionPoints = signal<DataPoint[]>([]);
+
+  readonly checkboxOptions = signal<CheckboxOption[]>(this.buildInitialCheckboxOptions());
+
+  readonly columnMenuState = signal<ColumnMenuState>({
+    open: false,
+    x: 0,
+    y: 0,
+    colId: null,
+  });
+
+  @ViewChild('agGrid') agGrid!: AgGridAngular;
+  @ViewChild('chartComp') chartComp?: ChartComponent;
+
   private gridApi!: GridApi;
   private savePreferencesTimeout?: ReturnType<typeof setTimeout>;
   private pendingFilterModel: Record<string, unknown> | null = null;
   private pendingColumnState: ReturnType<GridApi['getColumnState']> | null = null;
-  counter = 0;
-  isExpanded: boolean = false;
-  dataLoaded: boolean = false;
-  hasSavedPreferences = hasUiPreferences();
-  fileDate?: string;
-  rowData: any[] = [];
-  columnDefs: ColDef[] = [];
-  visibleColumns: Set<string> = new Set();
-  @ViewChild('agGrid') agGrid!: AgGridAngular;
-  showStandalone = true;
-  showExpansions = false;
-  columnMenuOpen = false;
-  columnMenuX = 0;
-  columnMenuY = 0;
-  columnMenuColId: string | null = null;
+  private results: DataPoint[] = [];
+
+  private readonly link = 'https://boardgamegeek.com/boardgame/';
+  private readonly doubleTapDelayMs = 300;
+  private lastTapTime = 0;
+  private lastTapObjectId: string | number | null = null;
+  private lastContextMenuX = 0;
+  private lastContextMenuY = 0;
+
   gridOptions = {
     ...gridOptions,
     defaultColDef: {
@@ -151,81 +299,49 @@ export class AppComponent {
     isExternalFilterPresent: () => true,
     doesExternalFilterPass: (node: any) => {
       const type = node.data.itemtype;
-      if (type === 'standalone') return this.showStandalone;
-      if (type === 'expansion') return this.showExpansions;
+      if (type === 'standalone') return this.showStandalone();
+      if (type === 'expansion') return this.showExpansions();
       return true;
-    }
+    },
   };
-  private results: DataPoint[] = [];
 
-
-  private readonly link = "https://boardgamegeek.com/boardgame/";
-  private readonly doubleTapDelayMs = 300;
-  private lastTapTime = 0;
-  private lastTapObjectId: string | number | null = null;
-  private lastContextMenuX = 0;
-  private lastContextMenuY = 0;
-
-  checkboxOptions = Object.keys(tableConfig).map(key => ({
-    key,
-    visible: tableConfig[key].visible,
-    translation: this.getTranslation(key)
-  }));
+  rowStyle: ((params: RowClassParams) => (RowStyle | undefined)) | undefined = (params) => {
+    if (params.data.itemtype === 'expansion') {
+      return { background: this.isDarkMode() ? '#3a4046' : '#c8c8c8' };
+    }
+    return { background: this.isDarkMode() ? '#22262a' : '#ececec' };
+  };
 
   constructor(
     private readonly http: HttpClient,
     private readonly columnMenuService: ColumnMenuService,
   ) {
-    this.columnMenuService.open$.subscribe(request => this.openColumnMenu(request));
+    this.columnMenuService.open$.subscribe((request) => this.openColumnMenu(request));
     this.applyStoredPreferences();
-    this.applyThemeToChart();
   }
 
   toggleDarkMode(): void {
-    this.isDarkMode = !this.isDarkMode;
-    this.applyThemeToChart();
+    this.isDarkMode.update((dark) => !dark);
     if (this.gridApi) {
       this.gridApi.redrawRows();
     }
     this.scheduleSavePreferences();
   }
 
-  private applyThemeToChart(): void {
-    (this.chartOptions as any).palette = {
-      colorScheme: this.isDarkMode ? 'dark' : 'light'
-    };
-    if (this.chart) {
-      this.chart.update({
-        palette: {
-          colorScheme: this.isDarkMode ? 'dark' : 'light'
-        }
-      } as any, true);
-    }
-  }
-
   getTranslation(key: string): string {
-    const browserLang = navigator.language || 'en';
+    const browserLang = typeof navigator !== 'undefined' ? (navigator.language || 'en') : 'en';
     const locale = browserLang.startsWith('pl') ? 'Pl' : 'En';
-
     return tableConfig[key]?.[`translation${locale}`] || key;
   }
 
-  rowStyle: ((params: RowClassParams) => (RowStyle | undefined)) | undefined = (params) => {
-    if (params.data.itemtype == 'expansion') {
-      return { background: this.isDarkMode ? '#3a4046' : '#c8c8c8' };
-    }
-    return { background: this.isDarkMode ? '#22262a' : '#ececec' };
-  };
-
-  async onFileUpload(event: any) {
-    const file = event.target.files[0];
+  async onFileUpload(file: File): Promise<void> {
     if (file) {
-      this.fileDate = this.formatDate(new Date(file.lastModified));
+      this.fileDate.set(this.formatDate(new Date(file.lastModified)));
     }
-    await this.pareseCSV(file)
+    await this.pareseCSV(file);
   }
 
-  async pareseCSV(file: any) {
+  async pareseCSV(file: any): Promise<void> {
     if (file && (await this.validateCsv(file))) {
       Papa.parse(file, {
         header: true,
@@ -233,11 +349,11 @@ export class AppComponent {
         dynamicTyping: true,
         complete: (result: ParseResult<DataPoint>) => {
           this.results = result.data;
-          const dataPoints = this.extractData();
-          this.dataLoaded = true;
-          this.updateChart(dataPoints[0], dataPoints[1]);
+          const [games, expansions] = this.extractData();
+          this.dataLoaded.set(true);
+          this.gamesPoints.set(games);
+          this.expansionPoints.set(expansions);
           this.processTableData(result);
-          this.initializeChart();
         },
         error: (error) => {
           console.error('Error parsing CSV:', error);
@@ -248,25 +364,27 @@ export class AppComponent {
     }
   }
 
-  extractData(optionalData?: DataPoint[]): DataPoint[][] {
+  extractData(optionalData?: DataPoint[]): [DataPoint[], DataPoint[]] {
     const data = optionalData || this.results;
-    this.counter = 0;
+    let count = 0;
     const dataPoints: DataPoint[] = [];
     const expansion: DataPoint[] = [];
+
     data.forEach((row) => {
       const average = +Number.parseFloat(row['average']).toFixed(3);
       const avgWeight = +Number.parseFloat(row['avgweight']).toFixed(3);
       const objectName = row['objectname'];
       const objectid = row['objectid'];
+
       if (!Number.isNaN(average) && !Number.isNaN(avgWeight) && avgWeight !== 0) {
         const dataPoint: DataPoint = {
           x: avgWeight,
           y: average,
           objectname: objectName,
-          objectid: objectid
+          objectid: objectid,
         };
 
-        Object.keys(row).forEach(key => {
+        Object.keys(row).forEach((key) => {
           if (tableConfig[key]) {
             dataPoint[key] = row[key];
           }
@@ -275,19 +393,21 @@ export class AppComponent {
         const isStandalone = row['itemtype'] === 'standalone';
         const isExpansion = row['itemtype'] === 'expansion';
 
-        if (isStandalone && this.showStandalone) {
+        if (isStandalone && this.showStandalone()) {
           dataPoints.push(dataPoint);
-          this.counter++;
-        } else if (isExpansion && this.showExpansions) {
+          count++;
+        } else if (isExpansion && this.showExpansions()) {
           expansion.push(dataPoint);
-          this.counter++;
+          count++;
         }
       }
     });
+
+    this.counter.set(count);
     return [dataPoints, expansion];
   }
 
-  onRowClicked(event: RowClickedEvent) {
+  onRowClicked(event: RowClickedEvent): void {
     const objectId = event.data.objectid;
 
     if (this.isTouchDevice() && this.isDoubleTap(objectId)) {
@@ -295,21 +415,10 @@ export class AppComponent {
       return;
     }
 
-    if (!this.chart) return;
-
-    // Wyczyść poprzednie zaznaczenia
-    this.chart.getSelectedPoints().forEach(p => p.select(false));
-
-    // Szukamy w obu seriach (Gry i Dodatki)
-    this.chart.series.forEach(series => {
-      const point = series.data.find(p => (p.options as any).objectid === objectId);
-      if (point) {
-        point.select(true, false);
-      }
-    });
+    this.chartComp?.selectPointByObjectId(objectId);
   }
 
-  onRowDoubleClicked(event: RowDoubleClickedEvent) {
+  onRowDoubleClicked(event: RowDoubleClickedEvent): void {
     this.openBggPage(event.data.objectid);
   }
 
@@ -332,12 +441,13 @@ export class AppComponent {
   }
 
   populateVisibleColumns(): void {
-    this.visibleColumns.clear();
-    for (const option of this.checkboxOptions) {
+    const nextSet = new Set<string>();
+    for (const option of this.checkboxOptions()) {
       if (option.visible) {
-        this.visibleColumns.add(option.key);
+        nextSet.add(option.key);
       }
     }
+    this.visibleColumns.set(nextSet);
   }
 
   private applyStoredPreferences(): void {
@@ -347,23 +457,29 @@ export class AppComponent {
     }
 
     if (prefs.darkMode !== undefined) {
-      this.isDarkMode = prefs.darkMode;
+      this.isDarkMode.set(prefs.darkMode);
     }
     if (prefs.showStandalone !== undefined) {
-      this.showStandalone = prefs.showStandalone;
+      this.showStandalone.set(prefs.showStandalone);
     }
     if (prefs.showExpansions !== undefined) {
-      this.showExpansions = prefs.showExpansions;
+      this.showExpansions.set(prefs.showExpansions);
     }
-    if (!this.showStandalone && !this.showExpansions) {
-      this.showStandalone = true;
-      this.showExpansions = false;
+    if (!this.showStandalone() && !this.showExpansions()) {
+      this.showStandalone.set(true);
+      this.showExpansions.set(false);
     }
 
-    for (const option of this.checkboxOptions) {
-      if (option.key in prefs.columnVisibility) {
-        option.visible = prefs.columnVisibility[option.key];
-      }
+    if (prefs.columnVisibility) {
+      const options = this.checkboxOptions();
+      this.checkboxOptions.set(
+        options.map((option) => {
+          if (option.key in prefs.columnVisibility) {
+            return { ...option, visible: prefs.columnVisibility[option.key] };
+          }
+          return option;
+        })
+      );
     }
 
     this.pendingFilterModel = prefs.filterModel;
@@ -384,54 +500,53 @@ export class AppComponent {
     const columnState = this.gridApi.getColumnState().map(({ hide, ...rest }) => rest);
     const prefs: UiPreferences = {
       columnVisibility: Object.fromEntries(
-        this.checkboxOptions.map(option => [option.key, option.visible])
+        this.checkboxOptions().map((option) => [option.key, option.visible])
       ),
-      showStandalone: this.showStandalone,
-      showExpansions: this.showExpansions,
+      showStandalone: this.showStandalone(),
+      showExpansions: this.showExpansions(),
       filterModel: this.gridApi.getFilterModel(),
       columnState,
-      darkMode: this.isDarkMode,
+      darkMode: this.isDarkMode(),
     };
 
     saveUiPreferences(prefs);
-    this.hasSavedPreferences = true;
+    this.hasSavedPreferences.set(true);
   }
 
   private persistPreferencesWithoutGrid(): void {
     const prefs: UiPreferences = {
       columnVisibility: Object.fromEntries(
-        this.checkboxOptions.map(option => [option.key, option.visible])
+        this.checkboxOptions().map((option) => [option.key, option.visible])
       ),
-      showStandalone: this.showStandalone,
-      showExpansions: this.showExpansions,
+      showStandalone: this.showStandalone(),
+      showExpansions: this.showExpansions(),
       filterModel: this.pendingFilterModel,
       columnState: this.pendingColumnState ?? [],
-      darkMode: this.isDarkMode,
+      darkMode: this.isDarkMode(),
     };
 
     saveUiPreferences(prefs);
-    this.hasSavedPreferences = true;
+    this.hasSavedPreferences.set(true);
   }
 
   resetPreferences(): void {
     clearUiPreferences();
-    this.hasSavedPreferences = false;
+    this.hasSavedPreferences.set(false);
     this.pendingFilterModel = null;
     this.pendingColumnState = null;
-    this.showStandalone = true;
-    this.showExpansions = false;
-    this.isDarkMode = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
-    this.applyThemeToChart();
+    this.showStandalone.set(true);
+    this.showExpansions.set(false);
+    this.isDarkMode.set(
+      typeof window !== 'undefined' && window.matchMedia
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : false
+    );
 
-    this.checkboxOptions = Object.keys(tableConfig).map(key => ({
-      key,
-      visible: tableConfig[key].visible,
-      translation: this.getTranslation(key)
-    }));
+    this.checkboxOptions.set(this.buildInitialCheckboxOptions());
 
-    if (this.dataLoaded) {
+    if (this.dataLoaded()) {
       this.populateVisibleColumns();
-      this.columnDefs = this.generateColumns(this.rowData[0] ?? {});
+      this.columnDefs.set(this.generateColumns(this.rowData()[0] ?? {}));
 
       if (this.gridApi) {
         this.gridApi.resetColumnState();
@@ -440,41 +555,41 @@ export class AppComponent {
         this.gridApi.redrawRows();
       }
 
-      const dataPoints = this.extractData();
-      this.updateChart(dataPoints[0], dataPoints[1]);
-      this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+      const [games, expansions] = this.extractData();
+      this.gamesPoints.set(games);
+      this.expansionPoints.set(expansions);
     }
   }
 
-  onFilterChanged() {
+  onFilterChanged(): void {
     const filteredData: any[] = [];
-    this.gridApi.forEachNodeAfterFilter(node => {
+    this.gridApi.forEachNodeAfterFilter((node) => {
       filteredData.push(node.data);
     });
-    const dataPoints = this.extractData(filteredData);
-    this.updateChart(dataPoints[0], dataPoints[1]);
-    this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+    const [games, expansions] = this.extractData(filteredData);
+    this.gamesPoints.set(games);
+    this.expansionPoints.set(expansions);
     this.scheduleSavePreferences();
   }
 
   private calculateCellDataType(key: string): string {
     const entry = tableConfig[key];
     if (entry.type) {
-      if (entry.type === "n") {
-        return "number";
-      } else if (entry.type === "b") {
-        return "boolean";
+      if (entry.type === 'n') {
+        return 'number';
+      } else if (entry.type === 'b') {
+        return 'boolean';
       }
     }
-    return "text"
+    return 'text';
   }
 
-  onUpdate(entry: { key: string, visible: boolean }) {
+  onOptionToggled(entry: { key: string; visible: boolean }): void {
     this.syncColumnVisibility(entry.key, entry.visible, true);
     this.onColumnVisibilityChanged();
   }
 
-  onColumnHeaderContextMenu(event: ColumnHeaderContextMenuEvent) {
+  onColumnHeaderContextMenu(event: ColumnHeaderContextMenuEvent): void {
     if (!isColumn(event.column)) {
       return;
     }
@@ -490,48 +605,55 @@ export class AppComponent {
     });
   }
 
-  openColumnMenu(request: ColumnMenuRequest) {
+  openColumnMenu(request: ColumnMenuRequest): void {
+    let x = 0;
+    let y = 0;
+
     if (request.anchor) {
       const rect = request.anchor.getBoundingClientRect();
-      this.columnMenuX = rect.left;
-      this.columnMenuY = rect.bottom + 4;
+      x = rect.left;
+      y = rect.bottom + 4;
     } else {
-      this.columnMenuX = request.clientX ?? 0;
-      this.columnMenuY = request.clientY ?? 0;
+      x = request.clientX ?? 0;
+      y = request.clientY ?? 0;
     }
 
-    this.columnMenuColId = request.colId;
-    this.columnMenuOpen = true;
+    this.columnMenuState.set({
+      open: true,
+      x,
+      y,
+      colId: request.colId,
+    });
   }
 
-  closeColumnMenu() {
-    this.columnMenuOpen = false;
-    this.columnMenuColId = null;
+  closeColumnMenu(): void {
+    this.columnMenuState.update((state) => ({
+      ...state,
+      open: false,
+      colId: null,
+    }));
   }
 
-  hideColumnFromMenu() {
-    if (!this.columnMenuColId || this.columnMenuColId === 'objectname') {
+  hideColumnFromMenu(colId: string): void {
+    if (colId === 'objectname') {
       return;
     }
 
-    const option = this.checkboxOptions.find(o => o.key === this.columnMenuColId);
+    const option = this.checkboxOptions().find((o) => o.key === colId);
     if (option) {
-      option.visible = false;
-      this.syncColumnVisibility(this.columnMenuColId, false, true);
+      this.syncColumnVisibility(colId, false, true);
       this.onColumnVisibilityChanged();
     }
 
     this.closeColumnMenu();
   }
 
-  toggleColumnFromMenu(option: { key: string; visible: boolean }, event: Event) {
-    const checked = (event.target as HTMLInputElement).checked;
-    option.visible = checked;
-    this.syncColumnVisibility(option.key, checked, true);
+  toggleColumnFromMenu(event: { option: CheckboxOption; checked: boolean }): void {
+    this.syncColumnVisibility(event.option.key, event.checked, true);
     this.onColumnVisibilityChanged();
   }
 
-  onColumnVisible(event: ColumnVisibleEvent) {
+  onColumnVisible(event: ColumnVisibleEvent): void {
     const columns = event.columns ?? (event.column ? [event.column] : []);
     let changed = false;
 
@@ -547,56 +669,24 @@ export class AppComponent {
   }
 
   @HostListener('window:resize')
-  onResize() {
+  onResize(): void {
     this.checkScreenSize();
   }
 
-  @HostListener('document:keydown.escape')
-  onEscape() {
-    if (this.columnMenuOpen) {
-      this.closeColumnMenu();
+  onToggleFilters(): void {
+    if (!this.showStandalone() && !this.showExpansions()) {
+      this.showStandalone.set(true);
     }
-  }
-
-  onToggleFilters() {
-    const dataPoints = this.extractData();
-    this.updateChart(dataPoints[0], dataPoints[1]);
-    this.chart = Highcharts.chart("hcContainer", this.chartOptions);
-    this.gridApi.onFilterChanged();
+    const [games, expansions] = this.extractData();
+    this.gamesPoints.set(games);
+    this.expansionPoints.set(expansions);
+    if (this.gridApi) {
+      this.gridApi.onFilterChanged();
+    }
     this.scheduleSavePreferences();
   }
 
-
-  updateChart(dataPoints: DataPoint[], expansions: DataPoint[]): void {
-    this.chartOptions = {
-      ...this.chartOptions,
-      palette: {
-        colorScheme: this.isDarkMode ? 'dark' : 'light'
-      } as any,
-      series: [
-        {
-          type: 'scatter',
-          name: t.chartSeriesGames,
-          marker: {
-            symbol: 'circle',
-            color: 'rgba(237,86,27,0.5)'
-          },
-          data: this.processPoints(dataPoints),
-        },
-        {
-          type: 'scatter',
-          name: t.chartSeriesExpansions,
-          marker: {
-            symbol: 'square',
-            color: 'rgba(5,141,199,0.5)'
-          },
-          data: this.processPoints(expansions),
-        },
-      ],
-    };
-  }
-
-  onGridReady(params: { api: GridApi; }) {
+  onGridReady(params: { api: GridApi }): void {
     this.gridApi = params.api;
     this.checkScreenSize();
     this.applyPendingGridState();
@@ -619,41 +709,33 @@ export class AppComponent {
     this.scheduleSavePreferences();
   }
 
-  addUserName() {
-    const userName = prompt(t.enterNamePrompt);
-    if (userName) {
-      window.open(`https://boardgamegeek.com/geekcollection.php?action=exportcsv&subtype=boardgame&username=${userName}&all=1`)
-    }
-  }
-
-  toggleOptions() {
-    this.isExpanded = !this.isExpanded;
-  }
-
-  onLoadMyExample() {
+  onLoadMyExample(): void {
     const filePath = environment.filePath;
     this.http.get(filePath, { observe: 'response', responseType: 'text' }).subscribe((response) => {
       const lastModified = response.headers.get('Last-Modified');
       if (lastModified) {
-        this.fileDate = this.formatDate(new Date(lastModified));
+        this.fileDate.set(this.formatDate(new Date(lastModified)));
       }
       this.pareseCSV(response.body!);
     });
   }
 
-  private processTableData(result: ParseResult<DataPoint>) {
+  private processTableData(result: ParseResult<DataPoint>): void {
     this.populateVisibleColumns();
-    this.rowData = result.data.map(row => {
+    const rows = result.data.map((row) => {
       if (row.bggrecagerange && typeof row.bggrecagerange === 'string') {
         row.bggrecagerange = Number.parseFloat(row.bggrecagerange.replace('+', ''));
       }
       return row;
     });
-    this.columnDefs = this.generateColumns(result.data[0] as unknown as any[]);
-    const isMobile = window.innerWidth < 768;
-    if (this.columnDefs[0]) {
-      this.columnDefs[0].pinned = isMobile ? null : "left";
+    this.rowData.set(rows);
+
+    const cols = this.generateColumns(result.data[0] as unknown as any[]);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (cols[0]) {
+      cols[0].pinned = isMobile ? null : 'left';
     }
+    this.columnDefs.set(cols);
   }
 
   private validateCsv(file: File): Promise<boolean> {
@@ -665,23 +747,23 @@ export class AppComponent {
           preview: 1,
           complete: (results: Papa.ParseResult<string[]>) => {
             const fileHeader = results.data[0];
-
-            const result = fileHeader.length === 58 &&
-              expectedHeader.every((value, index) =>
-                value.toLowerCase().trim() === fileHeader[index].toLowerCase().trim()
+            const result =
+              fileHeader.length === 58 &&
+              expectedHeader.every(
+                (value, index) => value.toLowerCase().trim() === fileHeader[index].toLowerCase().trim()
               );
             resolve(result);
           },
           error(error) {
             reject(error);
-          }
+          },
         });
       }
     });
   }
 
   @HostListener('document:contextmenu', ['$event'])
-  onDocumentContextMenu(event: MouseEvent) {
+  onDocumentContextMenu(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     if (!target.closest('.ag-header-cell, .ag-header-group-cell')) {
       return;
@@ -701,22 +783,26 @@ export class AppComponent {
     return `${day}.${month}.${year} ${hours}:${minutes}`;
   }
 
-  private initializeChart(): void {
-    this.chart = Highcharts.chart('hcContainer', this.chartOptions);
-  }
-
   private syncColumnVisibility(colId: string, visible: boolean, updateGrid: boolean): boolean {
-    const option = this.checkboxOptions.find(o => o.key === colId);
+    const options = this.checkboxOptions();
+    const option = options.find((o) => o.key === colId);
     if (!option || option.visible === visible) {
       return false;
     }
 
-    option.visible = visible;
-    if (visible) {
-      this.visibleColumns.add(colId);
-    } else {
-      this.visibleColumns.delete(colId);
-    }
+    this.checkboxOptions.set(
+      options.map((o) => (o.key === colId ? { ...o, visible } : o))
+    );
+
+    this.visibleColumns.update((cols) => {
+      const next = new Set(cols);
+      if (visible) {
+        next.add(colId);
+      } else {
+        next.delete(colId);
+      }
+      return next;
+    });
 
     if (updateGrid && this.gridApi) {
       this.gridApi.setColumnsVisible([colId], visible);
@@ -725,89 +811,64 @@ export class AppComponent {
     return true;
   }
 
-  private generateName(key: string) {
+  private generateName(key: string): string {
     return this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
   }
 
   private onColumnVisibilityChanged(): void {
-    if (!this.dataLoaded) {
+    if (!this.dataLoaded()) {
       this.scheduleSavePreferences();
       return;
     }
 
     if (this.gridApi) {
       const filteredData: any[] = [];
-      this.gridApi.forEachNodeAfterFilter(node => filteredData.push(node.data));
-      const dataPoints = this.extractData(filteredData);
-      this.updateChart(dataPoints[0], dataPoints[1]);
-      this.chart = Highcharts.chart("hcContainer", this.chartOptions);
+      this.gridApi.forEachNodeAfterFilter((node) => filteredData.push(node.data));
+      const [games, expansions] = this.extractData(filteredData);
+      this.gamesPoints.set(games);
+      this.expansionPoints.set(expansions);
     }
 
     this.scheduleSavePreferences();
   }
 
-  private processPoints(dataPoints: DataPoint[]) {
-    return dataPoints.map((point) => {
-      const additionalProps: StringKeyValueMap = {};
-      Object.keys(tableConfig).forEach(key => {
-        if (this.visibleColumns.has(key) && !(key in additionalProps)) {
-          const translatedKey = this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
-          additionalProps[translatedKey] = point[key];
-        }
-      });
+  private generateColumns(collection: any[]): ColDef[] {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const visibleCols = this.visibleColumns();
 
-      return {
-        name: point.objectname,
-        x: point.x,
-        y: point.y,
-        url: this.link + point.objectid,
-        objectid: point.objectid,
-        ...additionalProps
-      };
-    });
-  }
-
-  private generateColumns(collection: any[]) {
-    const isMobile = window.innerWidth < 768;
-    let columnNames = Object.keys(collection || {}).map(key => ({
+    const columnNames = Object.keys(collection || {}).map((key) => ({
       field: key,
       headerName: this.generateName(key),
       headerTooltip: this.generateName(key),
       filter: true,
       sortable: true,
-      hide: !this.visibleColumns.has(key),
+      hide: !visibleCols.has(key),
       floatingFilter: true,
       cellDataType: this.calculateCellDataType(key),
     } as ColDef));
-    columnNames.forEach(col => {
+
+    columnNames.forEach((col) => {
       if (col.field === 'objectname') {
         col.pinned = isMobile ? null : 'left';
         col.lockPinned = !isMobile;
         col.lockVisible = true;
       }
     });
+
     return columnNames;
   }
 
-  private checkScreenSize() {
+  private checkScreenSize(): void {
     if (!this.gridApi) return;
-    const isMobile = window.innerWidth < 768;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     this.gridApi.setColumnsPinned(['objectname'], isMobile ? null : 'left');
   }
+
+  private buildInitialCheckboxOptions(): CheckboxOption[] {
+    return Object.keys(tableConfig).map((key) => ({
+      key,
+      visible: tableConfig[key].visible,
+      translation: this.getTranslation(key),
+    }));
+  }
 }
-
-interface DataPoint {
-  bggrecagerange?: number | string;
-
-  [key: string]: any;
-
-  x: number;
-  y: number;
-  objectname: string;
-  objectid?: string;
-  url?: string;
-}
-
-type StringKeyValueMap = {
-  [key: string]: string;
-};
