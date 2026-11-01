@@ -105,6 +105,18 @@ const t = getActiveTranslations();
 
         @if (dataLoaded()) {
           <div class="view-tabs" role="tablist">
+            @if (!isMobile()) {
+              <button
+                type="button"
+                class="tab-btn"
+                [class.active]="activeTab() === 'all'"
+                (click)="setActiveTab('all')"
+                role="tab"
+                [attr.aria-selected]="activeTab() === 'all'"
+              >
+                📊 {{ t.viewAll }}
+              </button>
+            }
             <button
               type="button"
               class="tab-btn"
@@ -150,32 +162,32 @@ const t = getActiveTranslations();
 
         <div class="main-content">
           <!-- Chart section -->
-          <div
-            class="content-section chart-section"
-            [class.hidden-on-mobile]="isMobile() && activeTab() !== 'chart'"
-          >
-            <app-chart
-              #chartComp
-              [gamesData]="gamesPoints()"
-              [expansionsData]="expansionPoints()"
-              [visibleColumns]="visibleColumns()"
-              [isDarkMode]="isDarkMode()"
-              [isMobile]="isMobile()"
-              (pointSelected)="onChartPointSelected($event)"
-            />
-
-            @if (selectedGame()) {
-              <app-selected-game-preview
-                [game]="selectedGame()"
+          @if (dataLoaded() && (activeTab() === 'all' || activeTab() === 'chart')) {
+            <div class="content-section chart-section">
+              <app-chart
+                #chartComp
+                [gamesData]="gamesPoints()"
+                [expansionsData]="expansionPoints()"
+                [visibleColumns]="visibleColumns()"
                 [isDarkMode]="isDarkMode()"
-                (close)="clearSelectedGame()"
-                (openBgg)="openBggPage($event)"
+                [isMobile]="isMobile()"
+                [selectedObjectId]="selectedGame()?.objectid"
+                (pointSelected)="onChartPointSelected($event)"
               />
-            }
-          </div>
+
+              @if (selectedGame()) {
+                <app-selected-game-preview
+                  [game]="selectedGame()"
+                  [isDarkMode]="isDarkMode()"
+                  (close)="clearSelectedGame()"
+                  (openBgg)="openBggPage($event)"
+                />
+              }
+            </div>
+          }
 
           <!-- Cards view -->
-          @if (dataLoaded() && (activeTab() === 'cards' || (isMobile() && activeTab() === 'cards'))) {
+          @if (dataLoaded() && activeTab() === 'cards') {
             <div class="content-section cards-section">
               <app-game-card-list
                 [games]="allActiveGames()"
@@ -188,12 +200,8 @@ const t = getActiveTranslations();
           }
 
           <!-- AG-Grid Table view -->
-          @if (dataLoaded()) {
-            <div
-              class="content-section table-section"
-              [class.hidden-on-mobile]="isMobile() && activeTab() !== 'table'"
-              [class.hidden-on-desktop]="!isMobile() && activeTab() === 'cards'"
-            >
+          @if (dataLoaded() && (activeTab() === 'all' || activeTab() === 'table')) {
+            <div class="content-section table-section">
               <ag-grid-angular
                 #agGrid
                 (columnHeaderContextMenu)="onColumnHeaderContextMenu($event)"
@@ -218,13 +226,11 @@ const t = getActiveTranslations();
           }
 
           <!-- Info Section -->
-          <div
-            class="content-section info-section-wrapper"
-            [class.hidden-on-mobile]="isMobile() && activeTab() !== 'info'"
-            [class.hidden-on-desktop]="!isMobile() && activeTab() === 'cards'"
-          >
-            <app-info-section [isDarkMode]="isDarkMode()" />
-          </div>
+          @if (!dataLoaded() || activeTab() === 'info' || (!isMobile() && activeTab() === 'all')) {
+            <div class="content-section info-section-wrapper" [class.standalone-info]="activeTab() === 'info'">
+              <app-info-section [isDarkMode]="isDarkMode()" />
+            </div>
+          }
         </div>
       </div>
 
@@ -356,21 +362,15 @@ const t = getActiveTranslations();
       box-sizing: border-box;
     }
 
-    @media (max-width: 767px) {
-      .hidden-on-mobile {
-        display: none !important;
-      }
+    .info-section-wrapper.standalone-info {
+      padding: 10px 0;
+    }
 
+    @media (max-width: 767px) {
       .file-date {
         position: static;
         text-align: right;
         margin-bottom: 4px;
-      }
-    }
-
-    @media (min-width: 768px) {
-      .hidden-on-desktop {
-        display: none !important;
       }
     }
 
@@ -450,7 +450,9 @@ export class AppComponent {
   readonly isMobile = signal<boolean>(
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
-  readonly activeTab = signal<'chart' | 'cards' | 'table' | 'info'>('chart');
+  readonly activeTab = signal<'all' | 'chart' | 'cards' | 'table' | 'info'>(
+    typeof window !== 'undefined' && window.innerWidth < 768 ? 'chart' : 'all'
+  );
   readonly selectedGame = signal<any | null>(null);
 
   readonly fileDate = signal<string | undefined>(undefined);
@@ -615,11 +617,16 @@ export class AppComponent {
     return [dataPoints, expansion];
   }
 
-  setActiveTab(tab: 'chart' | 'cards' | 'table' | 'info'): void {
+  setActiveTab(tab: 'all' | 'chart' | 'cards' | 'table' | 'info'): void {
     this.activeTab.set(tab);
-    if (tab === 'chart') {
+    if (tab === 'chart' || tab === 'all') {
       setTimeout(() => {
         this.chartComp?.renderOrUpdateChart();
+      }, 50);
+    }
+    if (tab === 'table' || tab === 'all') {
+      setTimeout(() => {
+        this.gridApi?.sizeColumnsToFit();
       }, 50);
     }
   }
@@ -951,6 +958,14 @@ export class AppComponent {
     this.gridApi = params.api;
     this.checkScreenSize();
     this.applyPendingGridState();
+    if (this.selectedGame()?.objectid) {
+      this.gridApi.forEachNode((node) => {
+        if (node.data?.objectid === this.selectedGame()?.objectid) {
+          node.setSelected(true);
+          this.gridApi?.ensureNodeVisible(node, 'middle');
+        }
+      });
+    }
   }
 
   private applyPendingGridState(): void {
@@ -1122,6 +1137,9 @@ export class AppComponent {
   private checkScreenSize(): void {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     this.isMobile.set(isMobile);
+    if (isMobile && this.activeTab() === 'all') {
+      this.activeTab.set('chart');
+    }
     if (!this.gridApi) return;
     this.gridApi.setColumnsPinned(['objectname'], isMobile ? null : 'left');
   }

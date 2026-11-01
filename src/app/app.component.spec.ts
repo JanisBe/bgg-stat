@@ -78,11 +78,18 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
 
-    expect(app.activeTab()).toBe('chart');
+    expect(['all', 'chart']).toContain(app.activeTab());
     app.setActiveTab('cards');
     expect(app.activeTab()).toBe('cards');
     app.setActiveTab('table');
     expect(app.activeTab()).toBe('table');
+    app.setActiveTab('info');
+    expect(app.activeTab()).toBe('info');
+    app.setActiveTab('all');
+    expect(app.activeTab()).toBe('all');
+    app.setActiveTab('chart');
+    expect(app.activeTab()).toBe('chart');
+  });
   });
 
   it('should clear selected game on clearSelectedGame', () => {

@@ -53,6 +53,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
   readonly t = getActiveTranslations();
   readonly isDarkMode = input<boolean>(false);
   readonly isMobile = input<boolean>(false);
+  readonly selectedObjectId = input<string | number | null>(null);
   readonly gamesData = input<DataPoint[]>([]);
   readonly expansionsData = input<DataPoint[]>([]);
   readonly visibleColumns = input<Set<string>>(new Set());
@@ -68,6 +69,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
       // Register reactivity dependencies
       this.isDarkMode();
       this.isMobile();
+      this.selectedObjectId();
       this.gamesData();
       this.expansionsData();
       this.visibleColumns();
@@ -113,6 +115,10 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
 
     const options = this.buildChartOptions();
     this.chart = Highcharts.chart(this.containerRef.nativeElement, options);
+    const selId = this.selectedObjectId();
+    if (selId) {
+      this.selectPointByObjectId(selId);
+    }
   }
 
   private buildChartOptions(): Highcharts.Options {

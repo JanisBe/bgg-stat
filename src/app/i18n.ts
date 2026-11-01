@@ -30,6 +30,7 @@ export interface TranslationKeys {
   csvErrorAlert: string;
 
   // Mobile & Cards additions
+  viewAll: string;
   viewChart: string;
   viewCards: string;
   viewTable: string;
@@ -83,6 +84,7 @@ export const translationsPl: TranslationKeys = {
   enterNamePrompt: "Wpisz swoją nazwę użytkownika BGG:",
   csvErrorAlert: "Problem z plikiem CSV, czy na pewno pochodzi z BGG?",
 
+  viewAll: "Wszystko",
   viewChart: "Wykres",
   viewCards: "Karty",
   viewTable: "Tabela",
@@ -136,6 +138,7 @@ export const translationsEn: TranslationKeys = {
   enterNamePrompt: "Enter your BGG username:",
   csvErrorAlert: "Problem with CSV file, is it for sure from BGG?",
 
+  viewAll: "All",
   viewChart: "Chart",
   viewCards: "Cards",
   viewTable: "Table",
