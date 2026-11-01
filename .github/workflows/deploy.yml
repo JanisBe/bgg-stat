@@ -3,7 +3,7 @@ name: Build and Deploy to GitHub Pages
 on:
   push:
     branches:
-      - master
+      - '**'
     paths:
       - 'src/assets/collection.csv'
       - 'src/**'
