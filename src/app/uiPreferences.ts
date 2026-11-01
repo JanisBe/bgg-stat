@@ -25,7 +25,12 @@ export function loadUiPreferences(): UiPreferences | null {
     if (!raw) {
       return null;
     }
-    return JSON.parse(raw) as UiPreferences;
+    const prefs = JSON.parse(raw) as UiPreferences;
+    if (prefs && !prefs.showStandalone && !prefs.showExpansions) {
+      prefs.showStandalone = true;
+      prefs.showExpansions = false;
+    }
+    return prefs;
   } catch {
     return null;
   }

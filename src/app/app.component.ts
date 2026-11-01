@@ -1,9 +1,9 @@
-import {Component, HostListener, ViewChild, ChangeDetectionStrategy} from '@angular/core';
+import { Component, HostListener, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as Papa from 'papaparse';
-import {ParseResult} from 'papaparse';
+import { ParseResult } from 'papaparse';
 import * as Highcharts from 'highcharts';
-import {Chart} from 'highcharts';
-import {FormsModule} from "@angular/forms";
+import { Chart } from 'highcharts';
+import { FormsModule } from "@angular/forms";
 import {
   AllCommunityModule,
   ColDef,
@@ -18,13 +18,13 @@ import {
   RowDoubleClickedEvent,
   RowStyle
 } from "ag-grid-community";
-import {AgGridAngular} from "ag-grid-angular";
-import {gridOptions, tableConfig} from "./tableConfig";
-import {ColumnMenuRequest, ColumnMenuService} from "./column-menu.service";
-import {InnerHeaderComponent} from "./inner-header.component";
-import {HttpClient} from "@angular/common/http";
-import {environment} from "../environments/environment";
-import {getActiveTranslations} from "./i18n";
+import { AgGridAngular } from "ag-grid-angular";
+import { gridOptions, tableConfig } from "./tableConfig";
+import { ColumnMenuRequest, ColumnMenuService } from "./column-menu.service";
+import { InnerHeaderComponent } from "./inner-header.component";
+import { HttpClient } from "@angular/common/http";
+import { environment } from "../environments/environment";
+import { getActiveTranslations } from "./i18n";
 import {
   clearUiPreferences,
   hasUiPreferences,
@@ -137,7 +137,7 @@ export class AppComponent {
   visibleColumns: Set<string> = new Set();
   @ViewChild('agGrid') agGrid!: AgGridAngular;
   showStandalone = true;
-  showExpansions = true;
+  showExpansions = false;
   columnMenuOpen = false;
   columnMenuX = 0;
   columnMenuY = 0;
@@ -355,6 +355,10 @@ export class AppComponent {
     if (prefs.showExpansions !== undefined) {
       this.showExpansions = prefs.showExpansions;
     }
+    if (!this.showStandalone && !this.showExpansions) {
+      this.showStandalone = true;
+      this.showExpansions = false;
+    }
 
     for (const option of this.checkboxOptions) {
       if (option.key in prefs.columnVisibility) {
@@ -415,7 +419,7 @@ export class AppComponent {
     this.pendingFilterModel = null;
     this.pendingColumnState = null;
     this.showStandalone = true;
-    this.showExpansions = true;
+    this.showExpansions = false;
     this.isDarkMode = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
     this.applyThemeToChart();
 
@@ -429,7 +433,7 @@ export class AppComponent {
       this.populateVisibleColumns();
       this.columnDefs = this.generateColumns(this.rowData[0] ?? {});
 
-    if (this.gridApi) {
+      if (this.gridApi) {
         this.gridApi.resetColumnState();
         this.gridApi.setFilterModel(null);
         this.gridApi.onFilterChanged();
