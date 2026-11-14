@@ -90,7 +90,6 @@ describe('AppComponent', () => {
     app.setActiveTab('chart');
     expect(app.activeTab()).toBe('chart');
   });
-  });
 
   it('should clear selected game on clearSelectedGame', () => {
     const fixture = TestBed.createComponent(AppComponent);
@@ -101,5 +100,50 @@ describe('AppComponent', () => {
 
     app.clearSelectedGame();
     expect(app.selectedGame()).toBeNull();
+  });
+
+  it('should switch language between pl and en', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    fixture.detectChanges();
+
+    app.setLanguage('en');
+    fixture.detectChanges();
+    expect(app.currentLang()).toBe('en');
+    expect(app.t.title).toBe('BGG Collection');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('h1')?.textContent).toContain('BGG Collection');
+    const activeLangBtn = compiled.querySelector('.lang-btn.active');
+    expect(activeLangBtn?.textContent?.trim()).toBe('EN');
+
+    app.setLanguage('pl');
+    fixture.detectChanges();
+    expect(app.currentLang()).toBe('pl');
+    expect(app.t.title).toBe('Kolekcja BGG');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Kolekcja BGG');
+  });
+
+  it('should render header actions containing lang switcher and theme toggle without overlap', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const headerActions = compiled.querySelector('.header-actions');
+    expect(headerActions).toBeTruthy();
+
+    const langSwitcher = headerActions?.querySelector('.lang-switcher');
+    expect(langSwitcher).toBeTruthy();
+    expect(langSwitcher?.querySelectorAll('.lang-btn').length).toBe(2);
+
+    const themeToggle = headerActions?.querySelector('.theme-toggle-btn');
+    expect(themeToggle).toBeTruthy();
+
+    app.fileDate.set('2026-11-14');
+    fixture.detectChanges();
+    const fileDate = headerActions?.querySelector('.file-date');
+    expect(fileDate).toBeTruthy();
+    expect(fileDate?.textContent).toContain('2026-11-14');
   });
 });

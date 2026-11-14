@@ -6,12 +6,13 @@ import {
   OnDestroy,
   ViewChild,
   effect,
+  inject,
   input,
   output,
 } from '@angular/core';
 import * as Highcharts from 'highcharts';
 import { Chart } from 'highcharts';
-import { getActiveTranslations } from './i18n';
+import { I18nService } from './i18n';
 import { tableConfig } from './tableConfig';
 import { DataPoint, StringKeyValueMap } from './models';
 
@@ -50,7 +51,8 @@ const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', '
 export class ChartComponent implements AfterViewInit, OnDestroy {
   @ViewChild('container') private readonly containerRef?: ElementRef<HTMLDivElement>;
 
-  readonly t = getActiveTranslations();
+  private readonly i18n = inject(I18nService);
+  get t() { return this.i18n.t(); }
   readonly isDarkMode = input<boolean>(false);
   readonly isMobile = input<boolean>(false);
   readonly selectedObjectId = input<string | number | null>(null);
@@ -67,6 +69,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       // Register reactivity dependencies
+      this.i18n.currentLang();
       this.isDarkMode();
       this.isMobile();
       this.selectedObjectId();

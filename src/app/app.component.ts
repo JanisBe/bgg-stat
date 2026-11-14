@@ -4,6 +4,7 @@ import {
   HostListener,
   ViewChild,
   computed,
+  inject,
   signal,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -29,7 +30,7 @@ import { gridOptions, tableConfig } from './tableConfig';
 import { ColumnMenuRequest, ColumnMenuService } from './column-menu.service';
 import { InnerHeaderComponent } from './inner-header.component';
 import { environment } from '../environments/environment';
-import { getActiveTranslations } from './i18n';
+import { AppLanguage, I18nService, TranslationKeys } from './i18n';
 import {
   clearUiPreferences,
   hasUiPreferences,
@@ -48,8 +49,6 @@ import { SelectedGamePreviewComponent } from './selected-game-preview.component'
 ModuleRegistry.registerModules([AllCommunityModule]);
 provideGlobalGridOptions({ theme: 'legacy' });
 
-const t = getActiveTranslations();
-
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -65,22 +64,46 @@ const t = getActiveTranslations();
   ],
   template: `
     <div class="container" [class.dark-theme]="isDarkMode()">
-      @if (fileDate()) {
-        <div class="file-date">{{ fileDate() }}</div>
-      }
-
       <div>
         <div class="header-row">
           <h1>{{ t.title }}</h1>
-          <button
-            (click)="toggleDarkMode()"
-            class="theme-toggle-btn"
-            [title]="isDarkMode() ? t.switchToLight : t.switchToDark"
-            [attr.aria-label]="isDarkMode() ? t.switchToLight : t.switchToDark"
-            type="button"
-          >
-            {{ isDarkMode() ? '☀️' : '🌙' }}
-          </button>
+
+          <div class="header-actions">
+            @if (fileDate()) {
+              <span class="file-date" [title]="fileDate()">📅 {{ fileDate() }}</span>
+            }
+
+            <div class="lang-switcher" role="group" aria-label="Language switcher">
+              <button
+                type="button"
+                class="lang-btn"
+                [class.active]="currentLang() === 'pl'"
+                (click)="setLanguage('pl')"
+                title="Język polski"
+              >
+                PL
+              </button>
+              <button
+                type="button"
+                class="lang-btn"
+                [class.active]="currentLang() === 'en'"
+                (click)="setLanguage('en')"
+                title="English language"
+              >
+                EN
+              </button>
+            </div>
+
+            <button
+              (click)="toggleDarkMode()"
+              class="theme-toggle-btn"
+              [title]="isDarkMode() ? t.switchToLight : t.switchToDark"
+              [attr.aria-label]="isDarkMode() ? t.switchToLight : t.switchToDark"
+              type="button"
+            >
+              {{ isDarkMode() ? '☀️' : '🌙' }}
+            </button>
+          </div>
         </div>
 
         @if (counter() !== 0) {
@@ -257,23 +280,67 @@ const t = getActiveTranslations();
       margin-right: auto;
     }
 
-    .file-date {
-      position: absolute;
-      top: 5px;
-      right: 10px;
-      font-size: 8px;
-      color: gray;
-    }
-
     .header-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 15px;
+      flex-wrap: wrap;
 
       h1 {
         margin: 0;
         font-size: 1.8rem;
+        line-height: 1.2;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .file-date {
+      font-size: 0.75rem;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .lang-switcher {
+      display: inline-flex;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #64748b;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      line-height: 1;
+      transition: all 0.15s ease-in-out;
+
+      &:hover {
+        color: #1e293b;
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      &.active {
+        background: darkcyan;
+        color: #ffffff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
       }
     }
 
@@ -366,14 +433,6 @@ const t = getActiveTranslations();
       padding: 10px 0;
     }
 
-    @media (max-width: 767px) {
-      .file-date {
-        position: static;
-        text-align: right;
-        margin-bottom: 4px;
-      }
-    }
-
     .ag-header-cell:hover .ag-header-cell-text {
       position: absolute;
       background-color: white;
@@ -391,6 +450,31 @@ const t = getActiveTranslations();
     .container.dark-theme {
       color: #e0e0e0;
 
+      .file-date {
+        color: #94a3b8;
+        background: #24282c;
+        border-color: #3f4448;
+      }
+
+      .lang-switcher {
+        background: #1e2226;
+        border-color: #3f4448;
+      }
+
+      .lang-btn {
+        color: #94a3b8;
+
+        &:hover {
+          color: #f1f5f9;
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        &.active {
+          background: #008b8b;
+          color: #ffffff;
+        }
+      }
+
       .theme-toggle-btn {
         background: #2b3035;
         border-color: #00a8a8;
@@ -399,10 +483,6 @@ const t = getActiveTranslations();
         &:hover {
           background: #373e45;
         }
-      }
-
-      .file-date {
-        color: #9aa0a6;
       }
 
       .view-tabs {
@@ -439,7 +519,11 @@ const t = getActiveTranslations();
   `],
 })
 export class AppComponent {
-  readonly t = t;
+  readonly i18n = inject(I18nService);
+  get t(): TranslationKeys {
+    return this.i18n.t();
+  }
+  readonly currentLang = this.i18n.currentLang;
 
   readonly isDarkMode = signal<boolean>(
     typeof window !== 'undefined' && window.matchMedia
@@ -539,9 +623,24 @@ export class AppComponent {
   }
 
   getTranslation(key: string): string {
-    const browserLang = typeof navigator !== 'undefined' ? (navigator.language || 'en') : 'en';
-    const locale = browserLang.startsWith('pl') ? 'Pl' : 'En';
+    const locale = this.currentLang() === 'pl' ? 'Pl' : 'En';
     return tableConfig[key]?.[`translation${locale}`] || key;
+  }
+
+  setLanguage(lang: AppLanguage): void {
+    this.i18n.setLanguage(lang);
+    this.checkboxOptions.update((options) =>
+      options.map((option) => ({
+        ...option,
+        translation: this.getTranslation(option.key),
+      }))
+    );
+    if (this.dataLoaded() && this.rowData().length > 0) {
+      this.columnDefs.set(this.generateColumns(this.rowData()[0]));
+      if (this.gridApi) {
+        this.gridApi.setGridOption('columnDefs', this.columnDefs());
+      }
+    }
   }
 
   async onFileUpload(file: File): Promise<void> {
@@ -570,7 +669,7 @@ export class AppComponent {
         },
       });
     } else {
-      alert(t.csvErrorAlert);
+      alert(this.t.csvErrorAlert);
     }
   }
 

@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, HostListener, input, output } from '@angular/core';
-import { getActiveTranslations } from './i18n';
+import { ChangeDetectionStrategy, Component, HostListener, inject, input, output } from '@angular/core';
+import { I18nService } from './i18n';
 import { CheckboxOption } from './models';
 
 @Component({
@@ -142,7 +142,8 @@ import { CheckboxOption } from './models';
   `]
 })
 export class ColumnMenuComponent {
-  readonly t = getActiveTranslations();
+  private readonly i18n = inject(I18nService);
+  get t() { return this.i18n.t(); }
 
   readonly isOpen = input<boolean>(false);
   readonly x = input<number>(0);

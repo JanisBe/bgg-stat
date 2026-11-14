@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { getActiveTranslations } from './i18n';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { I18nService } from './i18n';
 
 @Component({
   selector: 'app-info-section',
@@ -37,7 +37,8 @@ import { getActiveTranslations } from './i18n';
   `]
 })
 export class InfoSectionComponent {
-  readonly t = getActiveTranslations();
+  private readonly i18n = inject(I18nService);
+  get t() { return this.i18n.t(); }
   readonly isDarkMode = input<boolean>(false);
 
   addUserName(): void {

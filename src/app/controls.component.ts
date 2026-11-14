@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, input, model, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { getActiveTranslations } from './i18n';
+import { I18nService } from './i18n';
 import { CheckboxOption } from './models';
+import { BggAuthService } from './bgg-auth.service';
 
 @Component({
   selector: 'app-controls',
@@ -42,18 +43,54 @@ import { CheckboxOption } from './models';
             </label>
           </div>
         </div>
+      }
 
-        <div class="options" style="position: relative;">
-          <div (click)="toggleOptions()" class="tooltip">
-            ⚙️ {{ t.options }}
-            @if (!dataLoaded()) {
-              <span class="tooltiptext">{{ t.loadCsvTooltip }}</span>
-            }
-          </div>
+      <div class="options" style="position: relative;">
+        <div (click)="toggleOptions()" class="options-btn" role="button" tabindex="0">
+          ⚙️ {{ t.options }}
+        </div>
 
-          @if (isExpanded()) {
-            <div class="options-backdrop" (click)="isExpanded.set(false)"></div>
-            <div (mouseleave)="isExpanded.set(false)" id="options-container">
+        @if (isExpanded()) {
+          <div class="options-backdrop" (click)="isExpanded.set(false)"></div>
+          <div (mouseleave)="isExpanded.set(false)" id="options-container">
+            <div class="bgg-token-section">
+              <div class="bgg-token-header">
+                <span class="section-title">{{ t.bggApiSettings }}</span>
+                <span class="token-status-pill" [class.active]="authService.hasToken()">
+                  {{ authService.hasToken() ? t.bggTokenConfigured : t.bggTokenNotConfigured }}
+                </span>
+              </div>
+              <div class="token-input-row">
+                <input
+                  [type]="showTokenInput() ? 'text' : 'password'"
+                  [placeholder]="t.tokenPlaceholder"
+                  [ngModel]="tokenInput()"
+                  (ngModelChange)="tokenInput.set($event)"
+                  class="token-input"
+                />
+                <button
+                  type="button"
+                  class="token-mask-btn"
+                  (click)="showTokenInput.set(!showTokenInput())"
+                  [title]="showTokenInput() ? 'Hide' : 'Show'"
+                >
+                  {{ showTokenInput() ? '🙈' : '👁️' }}
+                </button>
+              </div>
+              <div class="token-btn-row">
+                <button (click)="saveToken()" type="button" class="btn-token-save">{{ t.saveToken }}</button>
+                @if (authService.hasToken()) {
+                  <button (click)="clearToken()" type="button" class="btn-token-clear">{{ t.clearToken }}</button>
+                }
+              </div>
+              @if (tokenFeedback()) {
+                <div class="token-feedback-msg">{{ tokenFeedback() }}</div>
+              }
+            </div>
+
+            @if (dataLoaded()) {
+              <div class="section-divider"></div>
+
               @if (hasSavedPreferences()) {
                 <div class="option-item reset-item">
                   <button (click)="resetPreferences.emit()" type="button">{{ t.resetPreferences }}</button>
@@ -70,10 +107,16 @@ import { CheckboxOption } from './models';
                   />
                 </div>
               }
-            </div>
-          }
-        </div>
-      }
+            } @else {
+              <div class="section-divider"></div>
+              <div class="csv-hint">
+                <span class="hint-icon">ℹ️</span>
+                <span>{{ t.loadCsvTooltip }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   `,
   styles: [`
@@ -223,40 +266,136 @@ import { CheckboxOption } from './models';
       }
     }
 
-    .tooltip {
-      position: relative;
+    .bgg-token-section {
+      padding-bottom: 8px;
+    }
+
+    .bgg-token-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+
+      .section-title {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #1e293b;
+      }
+    }
+
+    .token-status-pill {
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      background: #e2e8f0;
+      color: #64748b;
+      font-weight: 600;
+
+      &.active {
+        background: #dcfce7;
+        color: #166534;
+      }
+    }
+
+    .token-input-row {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .token-input {
+      flex: 1;
+      min-width: 0;
+      padding: 5px 8px;
+      font-size: 0.8rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-family: monospace;
+      outline: none;
+
+      &:focus {
+        border-color: darkcyan;
+      }
+    }
+
+    .token-mask-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 4px 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+
+      &:hover {
+        background: #e2e8f0;
+      }
+    }
+
+    .token-btn-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-token-save {
+      flex: 1;
+      padding: 5px 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: darkcyan;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+
+      &:hover {
+        background: #007070;
+      }
+    }
+
+    .btn-token-clear {
+      padding: 5px 8px;
+      font-size: 0.78rem;
+      background: #f8fafc;
+      color: #ef4444;
+      border: 1px solid #fca5a5;
+      border-radius: 4px;
+      cursor: pointer;
+
+      &:hover {
+        background: #fee2e2;
+      }
+    }
+
+    .token-feedback-msg {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #059669;
+      font-weight: 500;
+    }
+
+    .section-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 8px 0;
+    }
+
+    .options-btn {
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      user-select: none;
     }
 
-    .tooltip .tooltiptext {
-      visibility: hidden;
-      width: 250px;
-      background-color: black;
-      color: #fff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 5px 0;
-      position: absolute;
-      z-index: 101;
-      top: -5px;
-      right: 110%;
-    }
-
-    .tooltip .tooltiptext::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 100%;
-      margin-top: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: transparent transparent transparent black;
-    }
-
-    .tooltip:hover .tooltiptext {
-      visibility: visible;
+    .csv-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: #64748b;
+      padding: 4px 0;
+      line-height: 1.35;
     }
 
     #options-container {
@@ -344,11 +483,77 @@ import { CheckboxOption } from './models';
           }
         }
       }
+
+      .bgg-token-header .section-title {
+        color: #f1f5f9;
+      }
+
+      .token-status-pill {
+        background: #334155;
+        color: #94a3b8;
+
+        &.active {
+          background: #143521;
+          color: #86efac;
+        }
+      }
+
+      .token-input {
+        background: #1e2226;
+        border-color: #475569;
+        color: #f1f5f9;
+
+        &:focus {
+          border-color: #38bdf8;
+        }
+      }
+
+      .token-mask-btn {
+        background: #2e343a;
+        border-color: #475569;
+        color: #f1f5f9;
+
+        &:hover {
+          background: #3b424a;
+        }
+      }
+
+      .btn-token-save {
+        background: #008b8b;
+
+        &:hover {
+          background: #00a8a8;
+        }
+      }
+
+      .btn-token-clear {
+        background: #2e1d1d;
+        border-color: #7f1d1d;
+        color: #fca5a5;
+
+        &:hover {
+          background: #3f1d1d;
+        }
+      }
+
+      .token-feedback-msg {
+        color: #34d399;
+      }
+
+      .section-divider {
+        background: #334155;
+      }
+
+      .csv-hint {
+        color: #94a3b8;
+      }
     }
   `]
 })
 export class ControlsComponent {
-  readonly t = getActiveTranslations();
+  private readonly i18n = inject(I18nService);
+  get t() { return this.i18n.t(); }
+  readonly authService = inject(BggAuthService);
 
   readonly dataLoaded = input<boolean>(false);
   readonly hasSavedPreferences = input<boolean>(false);
@@ -365,6 +570,22 @@ export class ControlsComponent {
   readonly resetPreferences = output<void>();
 
   readonly isExpanded = signal<boolean>(false);
+  readonly tokenInput = signal<string>(this.authService.token() || '');
+  readonly showTokenInput = signal<boolean>(false);
+  readonly tokenFeedback = signal<string | null>(null);
+
+  saveToken(): void {
+    this.authService.setToken(this.tokenInput());
+    this.tokenFeedback.set(this.t.tokenSaved);
+    setTimeout(() => this.tokenFeedback.set(null), 3000);
+  }
+
+  clearToken(): void {
+    this.tokenInput.set('');
+    this.authService.clearToken();
+    this.tokenFeedback.set(this.t.tokenCleared);
+    setTimeout(() => this.tokenFeedback.set(null), 3000);
+  }
 
   toggleOptions(): void {
     this.isExpanded.update(v => !v);

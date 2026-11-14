@@ -2,12 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { getActiveTranslations } from './i18n';
+import { I18nService } from './i18n';
 import { DataPoint } from './models';
 
 type SortOption = 'rating' | 'weight' | 'name' | 'rank';
@@ -518,7 +519,8 @@ type SortOption = 'rating' | 'weight' | 'name' | 'rank';
   `]
 })
 export class GameCardListComponent {
-  readonly t = getActiveTranslations();
+  private readonly i18n = inject(I18nService);
+  get t() { return this.i18n.t(); }
 
   readonly games = input<DataPoint[]>([]);
   readonly isDarkMode = input<boolean>(false);
