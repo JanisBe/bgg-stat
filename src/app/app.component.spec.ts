@@ -110,7 +110,7 @@ describe('AppComponent', () => {
     app.setLanguage('en');
     fixture.detectChanges();
     expect(app.currentLang()).toBe('en');
-    expect(app.t.title).toBe('BGG Collection');
+    expect(app.t.title).toBe('BGG Collection Visualizer');
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('BGG Collection');

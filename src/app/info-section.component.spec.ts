@@ -19,7 +19,7 @@ describe('InfoSectionComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const headings = compiled.querySelectorAll('h2');
-    expect(headings.length).toBe(2);
+    expect(headings).toHaveSize(2);
     expect(headings[0].textContent).toContain(fixture.componentInstance.t.infoTitle);
   });
 });

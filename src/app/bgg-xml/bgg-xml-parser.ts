@@ -20,12 +20,12 @@ import {
 function decodeHtmlEntities(text: string): string {
   if (!text) return '';
   return text
-    .replace(/&#039;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&gt;/g, '>')
-    .replace(/&lt;/g, '<')
-    .replace(/&amp;/g, '&');
+    .replaceAll("&#039;", "'")
+    .replaceAll("&apos;", "'")
+    .replaceAll('&quot;', '"')
+    .replaceAll("&gt;", '>')
+    .replaceAll("&lt;", '<')
+    .replaceAll("&amp;", '&');
 }
 
 function parseAttrValue(attr?: BggRawValueAttr | string | number): string {
@@ -34,8 +34,8 @@ function parseAttrValue(attr?: BggRawValueAttr | string | number): string {
     return attr['@_value'] !== undefined
       ? String(attr['@_value'])
       : attr['#text'] !== undefined
-      ? String(attr['#text'])
-      : '';
+        ? String(attr['#text'])
+        : '';
   }
   return String(attr);
 }

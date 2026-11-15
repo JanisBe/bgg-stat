@@ -22,7 +22,7 @@ describe('ControlsComponent', () => {
 
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    const exampleBtn = compiled.querySelector('.myCSV') as HTMLElement;
+    const exampleBtn = compiled.querySelector('.example-btn') as HTMLElement;
     exampleBtn.click();
 
     expect(emitted).toBeTrue();
@@ -34,13 +34,13 @@ describe('ControlsComponent', () => {
     fixture.detectChanges();
 
     let compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.filter-bar')).toBeNull();
+    expect(compiled.querySelector('.filter-section')).toBeNull();
 
     fixture.componentRef.setInput('dataLoaded', true);
     fixture.detectChanges();
 
     compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.filter-bar')).toBeTruthy();
+    expect(compiled.querySelector('.filter-section')).toBeTruthy();
   });
 
   it('should automatically select expansions when unchecking base games if expansions is false', () => {
@@ -52,7 +52,7 @@ describe('ControlsComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const inputs = compiled.querySelectorAll('.filter-item input') as NodeListOf<HTMLInputElement>;
+    const inputs = compiled.querySelectorAll('.filter-chip input') as NodeListOf<HTMLInputElement>;
     const standaloneInput = inputs[0];
 
     standaloneInput.checked = false;
@@ -72,7 +72,7 @@ describe('ControlsComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const inputs = compiled.querySelectorAll('.filter-item input') as NodeListOf<HTMLInputElement>;
+    const inputs = compiled.querySelectorAll('.filter-chip input') as NodeListOf<HTMLInputElement>;
     const expansionsInput = inputs[1];
 
     expansionsInput.checked = false;
@@ -92,7 +92,7 @@ describe('ControlsComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const inputs = compiled.querySelectorAll('.filter-item input') as NodeListOf<HTMLInputElement>;
+    const inputs = compiled.querySelectorAll('.filter-chip input') as NodeListOf<HTMLInputElement>;
     const standaloneInput = inputs[0];
 
     standaloneInput.checked = false;

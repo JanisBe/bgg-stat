@@ -28,7 +28,7 @@ describe('ColumnMenuComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.column-menu-popup')).toBeTruthy();
     const items = compiled.querySelectorAll('.column-menu-item');
-    expect(items.length).toBe(2);
+    expect(items).toHaveSize(2);
   });
 });
 

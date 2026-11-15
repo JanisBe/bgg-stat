@@ -1,0 +1,193 @@
+<div class="container" [class.dark-theme]="isDarkMode()">
+  <div>
+    <app-header
+      [title]="t.title"
+      [fileDate]="fileDate()"
+      [counter]="counter()"
+      [currentLang]="currentLang()"
+      [isDarkMode]="isDarkMode()"
+      [t]="t"
+      (languageChange)="setLanguage($event)"
+      (themeToggle)="toggleDarkMode()"
+    />
+
+    <app-controls
+      [dataLoaded]="dataLoaded()"
+      [hasSavedPreferences]="hasSavedPreferences()"
+      [checkboxOptions]="checkboxOptions()"
+      [isDarkMode]="isDarkMode()"
+      [(showStandalone)]="showStandalone"
+      [(showExpansions)]="showExpansions"
+      (fileSelected)="onFileUpload($event)"
+      (loadExample)="onLoadMyExample()"
+      (filterToggled)="onToggleFilters()"
+      (optionToggled)="onOptionToggled($event)"
+      (resetPreferences)="resetPreferences()"
+    />
+
+    @if (dataLoaded()) {
+      <div class="view-tabs" role="tablist">
+        @if (!isMobile()) {
+          <button
+            type="button"
+            class="tab-btn"
+            [class.active]="activeTab() === 'all'"
+            (click)="setActiveTab('all')"
+            role="tab"
+            [attr.aria-selected]="activeTab() === 'all'"
+          >
+            <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="7" height="9" x="3" y="3" rx="1"/>
+              <rect width="7" height="5" x="14" y="3" rx="1"/>
+              <rect width="7" height="9" x="14" y="12" rx="1"/>
+              <rect width="7" height="5" x="3" y="16" rx="1"/>
+            </svg>
+            <span>{{ t.viewAll }}</span>
+          </button>
+        }
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab() === 'chart'"
+          (click)="setActiveTab('chart')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'chart'"
+        >
+          <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          <span>{{ t.viewChart }}</span>
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab() === 'cards'"
+          (click)="setActiveTab('cards')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'cards'"
+        >
+          <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="14" height="18" x="5" y="3" rx="2"/>
+            <line x1="9" y1="7" x2="15" y2="7"/>
+            <line x1="9" y1="11" x2="15" y2="11"/>
+          </svg>
+          <span>{{ t.viewCards }}</span>
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab() === 'table'"
+          (click)="setActiveTab('table')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'table'"
+        >
+          <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3v18"/>
+            <rect width="18" height="18" x="3" y="3" rx="2"/>
+            <path d="M3 9h18"/>
+            <path d="M3 15h18"/>
+          </svg>
+          <span>{{ t.viewTable }}</span>
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab() === 'info'"
+          (click)="setActiveTab('info')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'info'"
+        >
+          <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span>{{ t.viewInfo }}</span>
+        </button>
+      </div>
+    }
+
+    <div class="main-content">
+      <!-- Chart section -->
+      @if (dataLoaded() && (activeTab() === 'all' || activeTab() === 'chart')) {
+        <div class="content-section chart-section">
+          <app-chart
+            #chartComp
+            [gamesData]="gamesPoints()"
+            [expansionsData]="expansionPoints()"
+            [visibleColumns]="visibleColumns()"
+            [isDarkMode]="isDarkMode()"
+            [isMobile]="isMobile()"
+            [selectedObjectId]="selectedGame()?.objectid"
+            (pointSelected)="onChartPointSelected($event)"
+          />
+
+          @if (selectedGame()) {
+            <app-selected-game-preview
+              [game]="selectedGame()"
+              [isDarkMode]="isDarkMode()"
+              (close)="clearSelectedGame()"
+              (openBgg)="openBggPage($event)"
+            />
+          }
+        </div>
+      }
+
+      <!-- Cards view -->
+      @if (dataLoaded() && activeTab() === 'cards') {
+        <div class="content-section cards-section">
+          <app-game-card-list
+            [games]="allActiveGames()"
+            [isDarkMode]="isDarkMode()"
+            [selectedObjectId]="selectedGame()?.objectid"
+            (gameSelected)="onCardGameSelected($event)"
+            (openBgg)="openBggPage($event)"
+          />
+        </div>
+      }
+
+      <!-- Table view -->
+      @if (dataLoaded() && (activeTab() === 'all' || activeTab() === 'table')) {
+        <div class="content-section table-section">
+          <app-game-table
+            #gameTable
+            [rowData]="rowData()"
+            [columnDefs]="columnDefs()"
+            [isDarkMode]="isDarkMode()"
+            [currentLang]="currentLang()"
+            [showStandalone]="showStandalone()"
+            [showExpansions]="showExpansions()"
+            [selectedObjectId]="selectedGame()?.objectid"
+            (rowSelect)="onTableRowSelected($event)"
+            (gameOpenBgg)="openBggPage($event)"
+            (filteredDataChange)="onTableFilterChanged($event)"
+            (gridStateChange)="onGridStateChanged()"
+            (columnVisible)="onColumnVisible($event)"
+            (columnMenuOpen)="openColumnMenu($event)"
+          />
+        </div>
+      }
+
+      <!-- Info Section -->
+      @if (!dataLoaded() || activeTab() === 'info' || (!isMobile() && activeTab() === 'all')) {
+        <div class="content-section info-section-wrapper" [class.standalone-info]="activeTab() === 'info'">
+          <app-info-section [isDarkMode]="isDarkMode()" />
+        </div>
+      }
+    </div>
+  </div>
+
+  <app-column-menu
+    [isOpen]="columnMenuState().open"
+    [x]="columnMenuState().x"
+    [y]="columnMenuState().y"
+    [colId]="columnMenuState().colId"
+    [options]="checkboxOptions()"
+    [isDarkMode]="isDarkMode()"
+    (close)="closeColumnMenu()"
+    (hideColumn)="hideColumnFromMenu($event)"
+    (toggleColumn)="toggleColumnFromMenu($event)"
+  />
+</div>

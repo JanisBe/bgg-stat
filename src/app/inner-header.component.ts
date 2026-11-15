@@ -1,6 +1,6 @@
-import {Component, inject, ChangeDetectionStrategy} from '@angular/core';
-import {IHeaderParams} from 'ag-grid-community';
-import {ColumnMenuService} from './column-menu.service';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { IHeaderParams } from 'ag-grid-community';
+import { ColumnMenuService } from './column-menu.service';
 
 @Component({
   selector: 'app-inner-header',

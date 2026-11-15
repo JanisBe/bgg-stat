@@ -27,14 +27,14 @@ describe('GameCardListComponent', () => {
     fixture.componentRef.setInput('games', sampleGames);
     fixture.detectChanges();
 
-    expect(component.sortedGames().length).toBe(3);
+    expect(component.sortedGames()).toHaveSize(3);
 
     component.onSearchChange('catan');
-    expect(component.sortedGames().length).toBe(1);
+    expect(component.sortedGames()).toHaveSize(1);
     expect(component.sortedGames()[0].objectname).toBe('Catan');
 
     component.clearSearch();
-    expect(component.sortedGames().length).toBe(3);
+    expect(component.sortedGames()).toHaveSize(3);
   });
 
   it('should sort games by rating and complexity', () => {
