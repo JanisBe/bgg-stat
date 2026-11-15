@@ -171,7 +171,7 @@ export const translationsPl: TranslationKeys = {
 };
 
 export const translationsEn: TranslationKeys = {
-  title: "BGG Collection",
+  title: "BGG Collection Visualizer",
   displayedGames: "Displayed {counter} games",
   or: " or ",
   useMyCsv: "use my CSV",

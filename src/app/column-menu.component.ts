@@ -32,7 +32,7 @@ import { CheckboxOption } from './models';
                 [disabled]="option.key === 'objectname'"
                 type="checkbox"
               />
-              {{ option.translation || option.key }}
+              <span>{{ option.translation || option.key }}</span>
             </label>
           }
         </div>
@@ -43,78 +43,62 @@ import { CheckboxOption } from './models';
     .column-menu-backdrop {
       position: fixed;
       inset: 0;
-      z-index: 1000;
+      z-index: var(--z-dropdown);
     }
 
     .column-menu-popup {
       position: fixed;
-      z-index: 1001;
+      z-index: calc(var(--z-dropdown) + 1);
       min-width: 220px;
       max-width: 320px;
-      max-height: 360px;
-      overflow: auto;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      padding: 8px 0;
-      font-size: 13px;
-
-      &.dark-theme {
-        background: #24282c;
-        border-color: #008b8b;
-        color: #e0e0e0;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-
-        .column-menu-action {
-          color: #e0e0e0;
-
-          &:hover {
-            background: #2f353b;
-          }
-        }
-
-        .column-menu-separator {
-          background: #444;
-        }
-
-        .column-menu-title {
-          color: #aaa;
-        }
-
-        .column-menu-item:hover {
-          background: #2f353b;
-        }
-      }
+      max-height: 380px;
+      overflow-y: auto;
+      background: var(--color-sheet);
+      border: var(--rule-bar) solid var(--color-rule-2);
+      border-radius: var(--radius-card);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      padding: var(--space-xs) 0;
+      font-size: var(--text-sm);
+      color: var(--color-ink);
     }
 
     .column-menu-action {
       display: block;
       width: calc(100% - 16px);
-      margin: 0 8px;
-      padding: 6px 8px;
+      margin: 0 var(--space-xs);
+      padding: var(--space-2xs) var(--space-xs);
       text-align: left;
       border: none;
       background: transparent;
       cursor: pointer;
       font-family: inherit;
-      font-size: inherit;
+      font-size: var(--text-sm);
+      color: var(--color-ink);
+      border-radius: var(--radius-pill);
 
       &:hover {
-        background: #f0fafa;
+        background: var(--color-paper-2);
+        color: var(--color-accent);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
       }
     }
 
     .column-menu-separator {
-      height: 1px;
-      background: #e0e0e0;
-      margin: 6px 0;
+      height: var(--rule-hair);
+      background: var(--color-rule);
+      margin: var(--space-2xs) 0;
     }
 
     .column-menu-title {
-      padding: 4px 12px 6px;
-      font-weight: bold;
-      color: #555;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+      padding: var(--space-2xs) var(--space-md);
+      letter-spacing: 0.02em;
     }
 
     .column-menu-list {
@@ -125,18 +109,19 @@ import { CheckboxOption } from './models';
     .column-menu-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 4px 12px;
+      gap: var(--space-xs);
+      padding: var(--space-2xs) var(--space-md);
       cursor: pointer;
       user-select: none;
+      font-size: var(--text-sm);
+      color: var(--color-ink);
 
       &:hover {
-        background: #f5f5f5;
+        background: var(--color-paper-2);
       }
 
-      &:has(input:disabled) {
-        opacity: 0.6;
-        cursor: default;
+      input[type="checkbox"] {
+        accent-color: var(--color-accent);
       }
     }
   `]
@@ -164,9 +149,9 @@ export class ColumnMenuComponent {
   }
 
   onHideColumn(): void {
-    const currentId = this.colId();
-    if (currentId && currentId !== 'objectname') {
-      this.hideColumn.emit(currentId);
+    const id = this.colId();
+    if (id) {
+      this.hideColumn.emit(id);
     }
   }
 
@@ -175,4 +160,3 @@ export class ColumnMenuComponent {
     this.toggleColumn.emit({ option, checked });
   }
 }
-

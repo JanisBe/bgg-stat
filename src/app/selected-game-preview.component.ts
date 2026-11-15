@@ -19,7 +19,7 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (game(); as g) {
-      <div class="preview-card" [class.dark-theme]="isDarkMode()">
+      <div class="preview-panel sheet" [class.dark-theme]="isDarkMode()">
         <div class="card-header">
           <div class="title-group">
             <h3 class="game-title">{{ g.objectname || g.name }}</h3>
@@ -34,38 +34,61 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
             [attr.aria-label]="t.close"
             [title]="t.close"
           >
-            ✕
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
           </button>
         </div>
 
         <div class="badges-row">
           @if (g.average || g.y) {
             <div class="stat-badge rating-badge">
-              <span class="badge-icon">★</span>
+              <svg class="badge-icon star-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
               <span class="badge-label">{{ t.rating }}:</span>
-              <span class="badge-value">{{ formatDecimal(g.average || g.y) }}</span>
+              <span class="badge-value num">{{ formatDecimal(g.average || g.y) }}</span>
             </div>
           }
 
           @if (g.avgweight || g.x) {
             <div class="stat-badge weight-badge" [class]="getWeightClass(g.avgweight || g.x)">
-              <span class="badge-icon">⚖</span>
+              <svg class="badge-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
+                <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
+                <path d="M7 21h10"/>
+                <path d="M12 3v18"/>
+                <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>
+              </svg>
               <span class="badge-label">{{ t.weight }}:</span>
-              <span class="badge-value">{{ formatDecimal(g.avgweight || g.x) }}/5</span>
+              <span class="badge-value num">{{ formatDecimal(g.avgweight || g.x) }}/5</span>
             </div>
           }
 
           @if (g.rank && g.rank !== '0' && g.rank !== 0) {
             <div class="stat-badge rank-badge">
-              <span class="badge-icon">🏆</span>
-              <span class="badge-value">#{{ g.rank }}</span>
+              <svg class="badge-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                <path d="M4 22h16"/>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+              </svg>
+              <span class="badge-value num">#{{ g.rank }}</span>
             </div>
           }
 
           @if (g.minplayers || g.maxplayers) {
             <div class="stat-badge players-badge">
-              <span class="badge-icon">👥</span>
-              <span class="badge-value">
+              <svg class="badge-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <span class="badge-value num">
                 {{ formatPlayers(g.minplayers, g.maxplayers) }}
                 @if (g.bggbestplayers) {
                   <span class="best-players" title="BGG Best">({{ g.bggbestplayers }})</span>
@@ -76,15 +99,23 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
 
           @if (g.playingtime) {
             <div class="stat-badge time-badge">
-              <span class="badge-icon">⏱</span>
-              <span class="badge-value">{{ g.playingtime }} {{ t.minutes }}</span>
+              <svg class="badge-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span class="badge-value num">{{ g.playingtime }} {{ t.minutes }}</span>
             </div>
           }
 
           @if (g.yearpublished && g.yearpublished !== '0') {
             <div class="stat-badge year-badge">
-              <span class="badge-icon">📅</span>
-              <span class="badge-value">{{ g.yearpublished }}</span>
+              <svg class="badge-icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                <line x1="16" x2="16" y1="2" y2="6"/>
+                <line x1="8" x2="8" y1="2" y2="6"/>
+                <line x1="3" x2="21" y1="10" y2="10"/>
+              </svg>
+              <span class="badge-value num">{{ g.yearpublished }}</span>
             </div>
           }
         </div>
@@ -98,9 +129,19 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
               </div>
             } @else if (bggError()) {
               <div class="bgg-error-banner">
-                <span>⚠️ {{ bggError() }}</span>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>{{ bggError() }}</span>
                 @if (g.objectid) {
-                  <button type="button" class="retry-btn" (click)="fetchBggDetails(g.objectid)">↺</button>
+                  <button type="button" class="retry-btn" (click)="fetchBggDetails(g.objectid)">
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21.5 2v6h-6"/>
+                      <path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                    </svg>
+                  </button>
                 }
               </div>
             } @else if (bggDetails(); as details) {
@@ -181,7 +222,7 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
                 @if (details.playerCountPoll || details.playerAgePoll) {
                   <div class="polls-grid">
                     @if (details.playerCountPoll; as poll) {
-                      <div class="poll-card">
+                      <div class="poll-panel">
                         <div class="poll-header">
                           <span class="poll-title">{{ t.playerCountPoll }}</span>
                           @if (poll.bestWith) {
@@ -192,7 +233,13 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
                         <div class="poll-bars-list">
                           @for (row of poll.results; track row.numPlayers) {
                             <div class="poll-bar-row">
-                              <span class="poll-row-label">{{ row.numPlayers }} 👤</span>
+                              <span class="poll-row-label">
+                                <span class="num">{{ row.numPlayers }}</span>
+                                <svg class="inline-user-icon" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                  <circle cx="9" cy="7" r="4"/>
+                                </svg>
+                              </span>
                               <div
                                 class="stacked-bar-track"
                                 [title]="row.numPlayers + ': ' + row.best + ' ' + t.pollBest + ', ' + row.recommended + ' ' + t.pollRecommended + ', ' + row.notRecommended + ' ' + t.pollNotRecommended"
@@ -207,7 +254,7 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
                                   <div class="bar-segment bar-not" [style.width.%]="row.notRecommendedPercent"></div>
                                 }
                               </div>
-                              <span class="poll-row-value">
+                              <span class="poll-row-value num">
                                 @if (row.bestPercent > 0) {
                                   <span class="val-best">{{ row.bestPercent }}%</span>
                                 } @else if (row.recommendedPercent > 0) {
@@ -229,7 +276,7 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
                     }
 
                     @if (details.playerAgePoll; as agePoll) {
-                      <div class="poll-card">
+                      <div class="poll-panel">
                         <div class="poll-header">
                           <span class="poll-title">{{ t.playerAgePoll }}</span>
                           @if (agePoll.suggestedAge) {
@@ -240,7 +287,7 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
                         <div class="poll-bars-list">
                           @for (row of agePoll.results; track row.age) {
                             <div class="poll-bar-row">
-                              <span class="poll-row-label">{{ row.age }}+</span>
+                              <span class="poll-row-label num">{{ row.age }}+</span>
                               <div
                                 class="age-bar-track"
                                 [title]="row.age + ' lat: ' + row.numVotes + ' ' + t.votes + ' (' + row.percentage + '%)'"
@@ -251,7 +298,7 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
                                   [style.width.%]="row.percentage"
                                 ></div>
                               </div>
-                              <span class="poll-row-value">
+                              <span class="poll-row-value num">
                                 <span [class.val-best]="row.age + '+' === agePoll.suggestedAge">{{ row.percentage }}%</span>
                               </span>
                             </div>
@@ -274,7 +321,11 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
               (click)="openBgg.emit(g.objectid)"
             >
               <span>{{ t.openInBgg }}</span>
-              <span class="external-icon">↗</span>
+              <svg class="external-icon" aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
             </button>
           }
         </div>
@@ -282,33 +333,21 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
     }
   `,
   styles: [`
-    .preview-card {
-      margin-top: 12px;
-      padding: 14px 16px;
-      background: #ffffff;
-      border: 1px solid #d0d7de;
-      border-left: 4px solid darkcyan;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      animation: fadeIn 0.2s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(-4px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .preview-panel {
+      margin-top: var(--space-sm);
+      padding: var(--space-md);
+      background: var(--color-sheet);
+      border: var(--rule-bar) solid var(--color-rule-2);
+      border-radius: var(--radius-card);
+      font-family: var(--font-body);
+      color: var(--color-ink);
     }
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 12px;
+      gap: var(--space-md);
     }
 
     .title-group {
@@ -318,166 +357,159 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
 
     .game-title {
       margin: 0;
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #1a202c;
-      line-height: 1.3;
-      word-break: break-word;
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      letter-spacing: var(--tracking-display);
+      color: var(--color-ink);
+      line-height: 1.25;
+      overflow-wrap: break-word;
     }
 
     .original-title {
-      margin-top: 2px;
-      font-size: 0.85rem;
-      color: #718096;
+      margin-top: var(--space-3xs);
+      font-size: var(--text-sm);
+      color: var(--color-muted);
       font-style: italic;
     }
 
     .close-btn {
       background: transparent;
-      border: none;
-      font-size: 16px;
+      border: var(--rule-hair) solid transparent;
       cursor: pointer;
-      color: #718096;
-      padding: 4px 8px;
-      border-radius: 4px;
-      line-height: 1;
-      min-width: 32px;
-      min-height: 32px;
+      color: var(--color-muted);
+      padding: var(--space-2xs);
+      border-radius: var(--radius-pill);
       display: flex;
       align-items: center;
       justify-content: center;
 
       &:hover {
-        background: #edf2f7;
-        color: #2d3748;
+        background: var(--color-paper-2);
+        color: var(--color-ink);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
       }
     }
 
     .badges-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin: 12px 0;
+      gap: var(--space-xs);
+      margin: var(--space-sm) 0;
     }
 
     .stat-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      font-size: 0.82rem;
-      padding: 4px 8px;
-      border-radius: 6px;
-      background: #f1f5f9;
-      color: #334155;
-      font-weight: 500;
+      gap: var(--space-2xs);
+      padding: var(--space-3xs) var(--space-xs);
+      border-radius: var(--radius-pill);
+      background: var(--color-paper-2);
+      border: var(--rule-hair) solid var(--color-rule);
+      font-size: var(--text-xs);
+      color: var(--color-ink);
+    }
+
+    .badge-icon {
+      flex-shrink: 0;
+      color: var(--color-muted);
+    }
+
+    .star-icon {
+      color: var(--color-accent);
     }
 
     .badge-label {
-      opacity: 0.75;
+      color: var(--color-muted);
     }
 
     .badge-value {
-      font-weight: 700;
-    }
-
-    .rating-badge {
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
+      font-weight: 600;
+      color: var(--color-ink);
     }
 
     .weight-light {
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #bbf7d0;
+      background: color-mix(in oklab, var(--color-success) 12%, var(--color-paper-2));
+      border-color: var(--color-success);
     }
 
     .weight-medium {
-      background: #ffedd5;
-      color: #9a3412;
-      border: 1px solid #fed7aa;
+      background: var(--color-paper-2);
+      border-color: var(--color-rule-2);
     }
 
     .weight-heavy {
-      background: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
+      background: color-mix(in oklab, var(--color-accent) 12%, var(--color-paper-2));
+      border-color: var(--color-accent);
     }
 
-    .rank-badge {
-      background: #ede9fe;
-      color: #5b21b6;
-      border: 1px solid #ddd6fe;
-    }
-
-    .best-players {
-      font-size: 0.75rem;
-      opacity: 0.8;
-      margin-left: 2px;
-    }
-
-    /* BGG Details container */
     .bgg-details-container {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dashed #e2e8f0;
+      margin-top: var(--space-sm);
+      padding-top: var(--space-sm);
+      border-top: var(--rule-hair) solid var(--color-rule);
     }
 
     .bgg-loading-indicator {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 0;
-      color: #64748b;
-      font-size: 0.82rem;
+      gap: var(--space-xs);
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      padding: var(--space-sm) 0;
     }
 
     .loading-spinner {
       width: 14px;
       height: 14px;
-      border: 2px solid #cbd5e1;
-      border-top-color: darkcyan;
+      border: 2px solid var(--color-rule);
+      border-top-color: var(--color-accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
 
     @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
+      to { transform: rotate(360deg); }
     }
 
     .bgg-error-banner {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-      border-radius: 6px;
-      font-size: 0.8rem;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--color-error-bg);
+      color: var(--color-error);
+      border: var(--rule-hair) solid var(--color-error);
+      border-radius: var(--radius-pill);
+      font-size: var(--text-sm);
     }
 
     .retry-btn {
       background: transparent;
-      border: 1px solid #991b1b;
-      color: #991b1b;
-      border-radius: 4px;
-      padding: 2px 6px;
+      border: var(--rule-hair) solid var(--color-error);
+      color: var(--color-error);
+      border-radius: var(--radius-pill);
+      padding: var(--space-3xs) var(--space-2xs);
       cursor: pointer;
-      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
+      }
     }
 
     .bgg-details-content {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: var(--space-md);
     }
 
     .bgg-main-info {
       display: flex;
-      gap: 12px;
+      gap: var(--space-md);
       align-items: flex-start;
     }
 
@@ -489,9 +521,8 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
       width: 72px;
       height: 72px;
       object-fit: cover;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-card);
+      border: var(--rule-hair) solid var(--color-rule-2);
     }
 
     .bgg-text-info {
@@ -499,543 +530,247 @@ import { BggThingDetails } from './bgg-xml/bgg-xml.models';
       min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: var(--space-2xs);
     }
 
     .meta-top-row {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 12px;
+      gap: var(--space-sm);
       flex-wrap: wrap;
     }
 
     .meta-left-col {
       flex: 1;
       min-width: 160px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .meta-right-col {
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .categories-tags {
-      justify-content: flex-end;
     }
 
     .meta-row {
-      font-size: 0.8rem;
-      line-height: 1.35;
-      color: #475569;
+      font-size: var(--text-sm);
+      line-height: 1.4;
+      color: var(--color-ink-2);
     }
 
     .meta-label {
       font-weight: 600;
-      color: #334155;
-      margin-right: 4px;
+      color: var(--color-ink);
+      margin-right: var(--space-2xs);
+    }
+
+    .designer-link {
+      color: var(--color-ink);
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
+
+      &:hover {
+        color: var(--color-accent);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
+      }
     }
 
     .mechanics-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 2px;
+      gap: var(--space-xs);
       flex-wrap: wrap;
     }
 
     .meta-tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 2px;
+      gap: var(--space-2xs);
     }
 
     .meta-pill {
-      font-size: 0.72rem;
-      padding: 2px 6px;
-      border-radius: 4px;
+      font-family: var(--font-display);
+      font-size: var(--text-xs);
       font-weight: 500;
-    }
-
-    .category-pill {
-      background: #e0f2fe;
-      color: #0369a1;
-    }
-
-    .mechanic-pill {
-      background: #f3e8ff;
-      color: #6b21a8;
-    }
-
-    .designer-link {
-      color: inherit;
-      text-decoration: underline;
-      text-decoration-color: #94a3b8;
-      transition: color 0.15s ease, text-decoration-color 0.15s ease;
-
-      &:hover {
-        color: darkcyan;
-        text-decoration-color: darkcyan;
-      }
-    }
-
-    .category-link {
-      display: inline-flex;
-      align-items: center;
+      letter-spacing: var(--tracking-display);
+      padding: var(--space-3xs) var(--space-xs);
+      border-radius: var(--radius-pill);
       text-decoration: none;
-      cursor: pointer;
-      transition: background-color 0.15s ease, transform 0.1s ease, color 0.15s ease;
+      background: var(--color-paper-2);
+      color: var(--color-ink);
+      border: var(--rule-hair) solid var(--color-rule);
 
       &:hover {
-        background: #bae6fd;
-        color: #0284c7;
-        transform: translateY(-1px);
+        background: var(--color-paper-3);
+        color: var(--color-accent);
       }
 
-      &:active {
-        transform: translateY(0);
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
       }
     }
 
-    .mechanic-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      text-decoration: none;
-      cursor: pointer;
-      transition: background-color 0.15s ease, transform 0.1s ease, color 0.15s ease;
-
-      &:hover {
-        background: #e9d5ff;
-        color: #581c87;
-        transform: translateY(-1px);
-        text-decoration: underline;
-      }
-
-      &:active {
-        transform: translateY(0);
-      }
-    }
-
-    /* Polls grid & cards */
     .polls-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-xs);
     }
 
-    .poll-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 10px 12px;
+    .poll-panel {
+      padding-top: var(--space-xs);
+      border-top: var(--rule-hair) solid var(--color-rule-2);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: var(--space-xs);
     }
 
     .poll-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
+      gap: var(--space-xs);
     }
 
     .poll-title {
-      font-weight: 700;
-      font-size: 0.8rem;
-      color: #334155;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: var(--text-xs);
+      letter-spacing: var(--tracking-display);
+      color: var(--color-muted);
       text-transform: uppercase;
-      letter-spacing: 0.3px;
     }
 
     .poll-badge {
-      font-size: 0.72rem;
-      padding: 2px 7px;
-      border-radius: 9999px;
-      font-weight: 600;
+      font-family: var(--font-outlier);
+      font-size: var(--text-xs);
+      padding: var(--space-3xs) var(--space-2xs);
+      border-radius: var(--radius-pill);
+      background: var(--color-paper-2);
+      border: var(--rule-hair) solid var(--color-rule);
     }
 
     .best-badge {
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-
-    .age-badge {
-      background: #e0f2fe;
-      color: #0369a1;
-      border: 1px solid #bae6fd;
+      color: var(--color-success);
+      border-color: var(--color-success);
     }
 
     .poll-bars-list {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: var(--space-2xs);
     }
 
     .poll-bar-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.78rem;
+      gap: var(--space-xs);
+      font-size: var(--text-xs);
     }
 
     .poll-row-label {
-      min-width: 40px;
-      font-weight: 600;
-      color: #475569;
-      font-size: 0.75rem;
+      min-width: 44px;
+      font-family: var(--font-outlier);
+      color: var(--color-ink-2);
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .inline-user-icon {
+      color: var(--color-muted);
     }
 
     .stacked-bar-track, .age-bar-track {
       flex: 1;
-      height: 10px;
-      background: #e2e8f0;
-      border-radius: 9999px;
+      height: 8px;
+      background: var(--color-paper-2);
+      border-radius: var(--radius-pill);
       overflow: hidden;
       display: flex;
     }
 
     .bar-segment {
       height: 100%;
-      transition: width 0.3s ease;
     }
 
     .bar-best {
-      background: #16a34a;
+      background: var(--color-accent);
     }
 
     .bar-rec {
-      background: #f59e0b;
+      background: var(--color-muted);
     }
 
     .bar-not {
-      background: #cbd5e1;
+      background: var(--color-rule);
     }
 
     .age-bar-fill {
       height: 100%;
-      background: #0284c7;
-      border-radius: 9999px;
-      transition: width 0.3s ease;
-
-      &.top-age {
-        background: darkcyan;
-      }
+      background: var(--color-accent);
+      border-radius: var(--radius-pill);
     }
 
     .poll-row-value {
-      min-width: 34px;
+      min-width: 38px;
       text-align: right;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    .val-best {
-      color: #16a34a;
-    }
-
-    .val-rec {
-      color: #d97706;
-    }
-
-    .val-muted {
-      color: #94a3b8;
+      font-family: var(--font-outlier);
+      color: var(--color-ink);
     }
 
     .poll-legend {
       display: flex;
-      gap: 12px;
-      font-size: 0.7rem;
-      color: #64748b;
-      padding-top: 4px;
-      border-top: 1px solid #f1f5f9;
+      gap: var(--space-md);
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+      padding-top: var(--space-2xs);
+      border-top: var(--rule-hair) solid var(--color-rule);
     }
 
     .legend-item {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: var(--space-2xs);
     }
 
     .legend-dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
     }
 
-    .dot-best {
-      background: #16a34a;
-    }
-
-    .dot-rec {
-      background: #f59e0b;
-    }
-
-    .dot-not {
-      background: #cbd5e1;
-    }
+    .dot-best { background: var(--color-accent); }
+    .dot-rec { background: var(--color-muted); }
+    .dot-not { background: var(--color-rule); }
 
     .card-footer {
       display: flex;
       justify-content: flex-end;
-      margin-top: 10px;
+      margin-top: var(--space-md);
+      padding-top: var(--space-xs);
+      border-top: var(--rule-hair) solid var(--color-rule);
     }
 
     .bgg-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: darkcyan;
-      color: #ffffff;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 0.88rem;
+      gap: var(--space-xs);
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+      border: var(--rule-hair) solid var(--color-accent);
+      padding: var(--space-xs) var(--space-md);
+      border-radius: var(--radius-pill);
+      font-family: var(--font-display);
+      font-size: var(--text-sm);
       font-weight: 600;
+      letter-spacing: var(--tracking-display);
       cursor: pointer;
-      min-height: 40px;
-      transition: background 0.15s ease, transform 0.1s ease;
 
       &:hover {
-        background: #007070;
-        transform: translateY(-1px);
+        background: var(--color-accent-2);
       }
 
-      &:active {
-        transform: translateY(0);
-      }
-    }
-
-    .external-icon {
-      font-size: 0.95rem;
-    }
-
-    /* Dark theme */
-    .preview-card.dark-theme {
-      background: #24282c;
-      border-color: #3f4448;
-      border-left-color: #00a8a8;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-
-      .game-title {
-        color: #f1f5f9;
-      }
-
-      .original-title {
-        color: #94a3b8;
-      }
-
-      .close-btn {
-        color: #94a3b8;
-
-        &:hover {
-          background: #33393f;
-          color: #f1f5f9;
-        }
-      }
-
-      .stat-badge {
-        background: #2d3339;
-        color: #cbd5e1;
-      }
-
-      .rating-badge {
-        background: #452b0a;
-        color: #fcd34d;
-        border-color: #78350f;
-      }
-
-      .weight-light {
-        background: #143521;
-        color: #86efac;
-        border-color: #166534;
-      }
-
-      .weight-medium {
-        background: #3c2415;
-        color: #fdba74;
-        border-color: #9a3412;
-      }
-
-      .weight-heavy {
-        background: #3c1618;
-        color: #fca5a5;
-        border-color: #991b1b;
-      }
-
-      .rank-badge {
-        background: #2e1d4d;
-        color: #c4b5fd;
-        border-color: #5b21b6;
-      }
-
-      .bgg-details-container {
-        border-top-color: #3f4448;
-      }
-
-      .bgg-loading-indicator {
-        color: #94a3b8;
-      }
-
-      .loading-spinner {
-        border-color: #475569;
-        border-top-color: #38bdf8;
-      }
-
-      .bgg-error-banner {
-        background: #3c1618;
-        color: #fca5a5;
-        border-color: #7f1d1d;
-      }
-
-      .retry-btn {
-        border-color: #fca5a5;
-        color: #fca5a5;
-      }
-
-      .game-cover {
-        border-color: #475569;
-      }
-
-      .meta-row {
-        color: #cbd5e1;
-      }
-
-      .meta-label {
-        color: #f1f5f9;
-      }
-
-      .designer-link {
-        color: #cbd5e1;
-        text-decoration-color: #64748b;
-
-        &:hover {
-          color: #38bdf8;
-          text-decoration-color: #38bdf8;
-        }
-      }
-
-      .category-pill {
-        background: #082f49;
-        color: #7dd3fc;
-      }
-
-      .category-link {
-        background: #082f49;
-        color: #7dd3fc;
-
-        &:hover {
-          background: #0c4a6e;
-          color: #bae6fd;
-        }
-      }
-
-      .mechanic-pill {
-        background: #3b0764;
-        color: #d8b4fe;
-      }
-
-      .mechanic-link {
-        background: #3b0764;
-        color: #d8b4fe;
-
-        &:hover {
-          background: #581c87;
-          color: #f3e8ff;
-        }
-      }
-
-      .poll-card {
-        background: #1e2226;
-        border-color: #33393f;
-      }
-
-      .poll-title {
-        color: #e2e8f0;
-      }
-
-      .best-badge {
-        background: #143521;
-        color: #86efac;
-        border-color: #166534;
-      }
-
-      .age-badge {
-        background: #082f49;
-        color: #7dd3fc;
-        border-color: #0369a1;
-      }
-
-      .poll-row-label {
-        color: #94a3b8;
-      }
-
-      .stacked-bar-track, .age-bar-track {
-        background: #2d3339;
-      }
-
-      .bar-best {
-        background: #22c55e;
-      }
-
-      .bar-rec {
-        background: #f59e0b;
-      }
-
-      .bar-not {
-        background: #475569;
-      }
-
-      .age-bar-fill {
-        background: #38bdf8;
-
-        &.top-age {
-          background: #00a8a8;
-        }
-      }
-
-      .val-best {
-        color: #4ade80;
-      }
-
-      .val-rec {
-        color: #fbbf24;
-      }
-
-      .val-muted {
-        color: #64748b;
-      }
-
-      .poll-legend {
-        color: #94a3b8;
-        border-top-color: #2d3339;
-      }
-
-      .dot-best {
-        background: #22c55e;
-      }
-
-      .dot-rec {
-        background: #f59e0b;
-      }
-
-      .dot-not {
-        background: #475569;
-      }
-
-      .bgg-btn {
-        background: #008b8b;
-
-        &:hover {
-          background: #00a8a8;
-        }
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
       }
     }
   `],

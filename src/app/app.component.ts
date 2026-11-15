@@ -4,6 +4,7 @@ import {
   HostListener,
   ViewChild,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -65,12 +66,20 @@ provideGlobalGridOptions({ theme: 'legacy' });
   template: `
     <div class="container" [class.dark-theme]="isDarkMode()">
       <div>
-        <div class="header-row">
+        <header class="header-row">
           <h1>{{ t.title }}</h1>
 
           <div class="header-actions">
             @if (fileDate()) {
-              <span class="file-date" [title]="fileDate()">📅 {{ fileDate() }}</span>
+              <span class="file-date" [title]="fileDate()">
+                <svg class="date-icon" aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                  <line x1="16" x2="16" y1="2" y2="6"/>
+                  <line x1="8" x2="8" y1="2" y2="6"/>
+                  <line x1="3" x2="21" y1="10" y2="10"/>
+                </svg>
+                <span class="num">{{ fileDate() }}</span>
+              </span>
             }
 
             <div class="lang-switcher" role="group" aria-label="Language switcher">
@@ -101,14 +110,30 @@ provideGlobalGridOptions({ theme: 'legacy' });
               [attr.aria-label]="isDarkMode() ? t.switchToLight : t.switchToDark"
               type="button"
             >
-              {{ isDarkMode() ? '☀️' : '🌙' }}
+              @if (isDarkMode()) {
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="5"/>
+                  <line x1="12" y1="1" x2="12" y2="3"/>
+                  <line x1="12" y1="21" x2="12" y2="23"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="1" y1="12" x2="3" y2="12"/>
+                  <line x1="21" y1="12" x2="23" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+              } @else {
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+              }
             </button>
           </div>
-        </div>
+        </header>
 
         @if (counter() !== 0) {
           <div class="displayed-games">
-            {{ t.displayedGames.replace('{counter}', '' + counter()) }}
+            <span class="num">{{ t.displayedGames.replace('{counter}', '' + counter()) }}</span>
           </div>
         }
 
@@ -137,7 +162,13 @@ provideGlobalGridOptions({ theme: 'legacy' });
                 role="tab"
                 [attr.aria-selected]="activeTab() === 'all'"
               >
-                📊 {{ t.viewAll }}
+                <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect width="7" height="9" x="3" y="3" rx="1"/>
+                  <rect width="7" height="5" x="14" y="3" rx="1"/>
+                  <rect width="7" height="9" x="14" y="12" rx="1"/>
+                  <rect width="7" height="5" x="3" y="16" rx="1"/>
+                </svg>
+                <span>{{ t.viewAll }}</span>
               </button>
             }
             <button
@@ -148,7 +179,12 @@ provideGlobalGridOptions({ theme: 'legacy' });
               role="tab"
               [attr.aria-selected]="activeTab() === 'chart'"
             >
-              📈 {{ t.viewChart }}
+              <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              <span>{{ t.viewChart }}</span>
             </button>
             <button
               type="button"
@@ -158,7 +194,12 @@ provideGlobalGridOptions({ theme: 'legacy' });
               role="tab"
               [attr.aria-selected]="activeTab() === 'cards'"
             >
-              🎴 {{ t.viewCards }}
+              <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="14" height="18" x="5" y="3" rx="2"/>
+                <line x1="9" y1="7" x2="15" y2="7"/>
+                <line x1="9" y1="11" x2="15" y2="11"/>
+              </svg>
+              <span>{{ t.viewCards }}</span>
             </button>
             <button
               type="button"
@@ -168,7 +209,13 @@ provideGlobalGridOptions({ theme: 'legacy' });
               role="tab"
               [attr.aria-selected]="activeTab() === 'table'"
             >
-              📋 {{ t.viewTable }}
+              <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3v18"/>
+                <rect width="18" height="18" x="3" y="3" rx="2"/>
+                <path d="M3 9h18"/>
+                <path d="M3 15h18"/>
+              </svg>
+              <span>{{ t.viewTable }}</span>
             </button>
             <button
               type="button"
@@ -178,7 +225,12 @@ provideGlobalGridOptions({ theme: 'legacy' });
               role="tab"
               [attr.aria-selected]="activeTab() === 'info'"
             >
-              ℹ️ {{ t.viewInfo }}
+              <svg class="tab-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <span>{{ t.viewInfo }}</span>
             </button>
           </div>
         }
@@ -271,151 +323,189 @@ provideGlobalGridOptions({ theme: 'legacy' });
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+      min-height: 100vh;
+      background-color: var(--color-paper);
+    }
+
     .container {
-      margin: 10px;
-      font-family: "Unica One", arial, helvetica, sans-serif, serif;
+      margin: 0 auto;
+      padding: var(--space-md) var(--gutter);
       position: relative;
-      max-width: 1400px;
-      margin-left: auto;
-      margin-right: auto;
+      max-width: var(--container);
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--color-ink);
+      box-sizing: border-box;
     }
 
     .header-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 15px;
+      gap: var(--space-md);
       flex-wrap: wrap;
+      padding-bottom: var(--space-xs);
+      border-bottom: var(--rule-bar) solid var(--color-rule-2);
 
       h1 {
         margin: 0;
-        font-size: 1.8rem;
-        line-height: 1.2;
+        font-family: var(--font-display);
+        font-size: var(--text-2xl);
+        font-weight: 700;
+        letter-spacing: var(--tracking-display);
+        color: var(--color-ink);
+        line-height: 1.1;
       }
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--space-xs);
       flex-wrap: wrap;
     }
 
     .file-date {
-      font-size: 0.75rem;
-      color: #64748b;
-      background: #f1f5f9;
-      padding: 4px 8px;
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
+      font-family: var(--font-outlier);
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+      background: var(--color-sheet);
+      padding: var(--space-3xs) var(--space-xs);
+      border-radius: var(--radius-pill);
+      border: var(--rule-hair) solid var(--color-rule);
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2xs);
+    }
+
+    .date-icon {
+      color: var(--color-muted);
     }
 
     .lang-switcher {
       display: inline-flex;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 2px;
-      gap: 2px;
+      background: var(--color-sheet);
+      border: var(--rule-hair) solid var(--color-rule-2);
+      border-radius: var(--radius-pill);
+      padding: 1px;
+      gap: 1px;
     }
 
     .lang-btn {
       background: transparent;
       border: none;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #64748b;
-      padding: 4px 8px;
-      border-radius: 6px;
+      font-family: var(--font-display);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: var(--tracking-display);
+      color: var(--color-muted);
+      padding: var(--space-3xs) var(--space-xs);
+      border-radius: var(--radius-pill);
       cursor: pointer;
       line-height: 1;
-      transition: all 0.15s ease-in-out;
 
       &:hover {
-        color: #1e293b;
-        background: rgba(0, 0, 0, 0.05);
+        color: var(--color-ink);
+        background: var(--color-paper-2);
       }
 
       &.active {
-        background: darkcyan;
-        color: #ffffff;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        background: var(--color-ink);
+        color: var(--color-paper);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
       }
     }
 
     .displayed-games {
-      margin-top: 5px;
-      font-size: 0.95rem;
+      margin-top: var(--space-2xs);
+      font-family: var(--font-outlier);
+      font-size: var(--text-xs);
+      color: var(--color-muted);
     }
 
     .theme-toggle-btn {
-      background: #f8f9fa;
-      border: 1px solid darkcyan;
-      border-radius: 50%;
-      width: 38px;
-      height: 38px;
+      background: var(--color-sheet);
+      border: var(--rule-hair) solid var(--color-rule-2);
+      border-radius: var(--radius-pill);
+      width: 32px;
+      height: 32px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
       cursor: pointer;
-      transition: all 0.2s ease-in-out;
+      color: var(--color-ink);
       padding: 0;
-      user-select: none;
 
       &:hover {
-        background: #e6f7f7;
-        transform: scale(1.08);
+        background: var(--color-paper-2);
+        color: var(--color-accent);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
       }
     }
 
     .view-tabs {
       display: flex;
-      gap: 6px;
-      margin: 14px 0 10px 0;
-      background: #f1f5f9;
-      padding: 4px;
-      border-radius: 10px;
-      border: 1px solid #e2e8f0;
+      gap: var(--space-3xs);
+      margin: var(--space-sm) 0 var(--space-xs) 0;
+      background: var(--color-paper-2);
+      padding: 2px;
+      border-radius: var(--radius-card);
+      border: var(--rule-hair) solid var(--color-rule);
       overflow-x: auto;
     }
 
     .tab-btn {
       flex: 1;
       min-width: 75px;
-      min-height: 40px;
-      padding: 8px 10px;
-      border: none;
+      min-height: 34px;
+      padding: var(--space-2xs) var(--space-xs);
+      border: var(--rule-hair) solid transparent;
       background: transparent;
-      color: #475569;
-      font-family: inherit;
-      font-size: 0.95rem;
-      font-weight: 600;
-      border-radius: 7px;
+      color: var(--color-ink-2);
+      font-family: var(--font-display);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      letter-spacing: var(--tracking-display);
+      border-radius: var(--radius-pill);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      transition: all 0.15s ease;
+      gap: var(--space-2xs);
       white-space: nowrap;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.6);
-        color: #0f172a;
+        background: var(--color-paper-3);
+        color: var(--color-ink);
       }
 
       &.active {
-        background: #ffffff;
-        color: darkcyan;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        font-weight: 700;
+        background: var(--color-sheet);
+        color: var(--color-accent);
+        border-color: var(--color-rule-2);
+        font-weight: 600;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
       }
     }
 
+    .tab-icon {
+      flex-shrink: 0;
+    }
+
     .main-content {
-      margin-top: 10px;
+      margin-top: var(--space-2xs);
     }
 
     .content-section {
@@ -424,97 +514,28 @@ provideGlobalGridOptions({ theme: 'legacy' });
 
     .grid-container {
       width: 100%;
-      height: 520px;
-      margin: 10px 0;
+      height: 540px;
+      margin: var(--space-xs) 0;
       box-sizing: border-box;
     }
 
     .info-section-wrapper.standalone-info {
-      padding: 10px 0;
+      padding: var(--space-xs) 0;
     }
 
     .ag-header-cell:hover .ag-header-cell-text {
       position: absolute;
-      background-color: white;
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      z-index: 10;
+      background: var(--color-sheet);
+      color: var(--color-ink);
+      padding: var(--space-2xs) var(--space-xs);
+      border: var(--rule-hair) solid var(--color-rule-2);
+      border-radius: var(--radius-card);
+      z-index: var(--z-dropdown);
       white-space: normal;
       overflow: visible;
       text-overflow: clip;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      max-width: 200px;
-    }
-
-    .container.dark-theme {
-      color: #e0e0e0;
-
-      .file-date {
-        color: #94a3b8;
-        background: #24282c;
-        border-color: #3f4448;
-      }
-
-      .lang-switcher {
-        background: #1e2226;
-        border-color: #3f4448;
-      }
-
-      .lang-btn {
-        color: #94a3b8;
-
-        &:hover {
-          color: #f1f5f9;
-          background: rgba(255, 255, 255, 0.05);
-        }
-
-        &.active {
-          background: #008b8b;
-          color: #ffffff;
-        }
-      }
-
-      .theme-toggle-btn {
-        background: #2b3035;
-        border-color: #00a8a8;
-        color: #ffd43b;
-
-        &:hover {
-          background: #373e45;
-        }
-      }
-
-      .view-tabs {
-        background: #1e2226;
-        border-color: #33393f;
-
-        .tab-btn {
-          color: #94a3b8;
-
-          &:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: #f1f5f9;
-          }
-
-          &.active {
-            background: #2b3035;
-            color: #38bdf8;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-          }
-        }
-      }
-
-      .ag-header-cell:hover .ag-header-cell-text {
-        background-color: #24282c;
-        color: #e0e0e0;
-        border-color: #444;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-      }
-
-      h1 {
-        color: #f1f3f4;
-      }
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      max-width: 220px;
     }
   `],
 })
@@ -612,6 +633,14 @@ export class AppComponent {
   ) {
     this.columnMenuService.open$.subscribe((request) => this.openColumnMenu(request));
     this.applyStoredPreferences();
+
+    effect(() => {
+      const isDark = this.isDarkMode();
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.toggle('dark-theme', isDark);
+        document.body.classList.toggle('dark-theme', isDark);
+      }
+    });
   }
 
   toggleDarkMode(): void {

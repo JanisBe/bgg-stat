@@ -24,7 +24,7 @@ const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', '
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="graph"
+      class="graph sheet"
       [class.highcharts-dark]="isDarkMode()"
       [class.highcharts-light]="!isDarkMode()"
     >
@@ -38,7 +38,12 @@ const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', '
     }
 
     .graph {
-      margin: 10px 0;
+      margin: var(--space-md) 0;
+      background: var(--color-sheet);
+      border: var(--rule-bar) solid var(--color-rule-2);
+      border-radius: var(--radius-card);
+      padding: var(--space-xs);
+      box-sizing: border-box;
     }
 
     #hcContainer {
@@ -97,7 +102,6 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
 
   selectPointByObjectId(objectId: string | number | undefined): void {
     if (!this.chart || objectId === undefined) return;
-
     this.chart.getSelectedPoints().forEach(p => p.select(false));
     this.chart.series.forEach(series => {
       const point = series.data.find(p => (p.options as any).objectid === objectId);
@@ -131,9 +135,17 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
     const games = this.processPoints(this.gamesData());
     const expansions = this.processPoints(this.expansionsData());
 
+    const textColor = isDark ? '#e4e8ec' : '#1e242a';
+    const mutedColor = isDark ? '#98a2ad' : '#58626e';
+    const gridLineColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
+    const gamesColor = isDark ? 'rgba(235, 75, 135, 0.75)' : 'rgba(180, 24, 90, 0.70)';
+    const expansionsColor = isDark ? 'rgba(84, 154, 230, 0.75)' : 'rgba(38, 92, 138, 0.70)';
+    const selectColor = isDark ? '#fb7185' : '#be123c';
+
     return {
       chart: {
         type: 'scatter',
+        backgroundColor: 'transparent',
         height: isMobileDevice ? 400 : 700,
         zooming: {
           type: 'xy'
@@ -142,24 +154,90 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
           enabled: true,
           type: 'xy'
         },
-        panKey: 'shift'
+        panKey: 'shift',
+        style: {
+          fontFamily: '"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif'
+        }
       },
-      palette: {
-        colorScheme: isDark ? 'dark' : 'light'
-      } as any,
-      title: { text: this.t.chartTitle },
-      xAxis: { title: { text: this.t.chartXAxis } },
-      yAxis: { title: { text: this.t.chartYAxis } },
+      title: {
+        text: this.t.chartTitle,
+        style: {
+          fontFamily: '"Hanken Grotesk", sans-serif',
+          fontWeight: '600',
+          fontSize: '18px',
+          color: textColor,
+          letterSpacing: '-0.02em'
+        }
+      },
+      xAxis: {
+        title: {
+          text: this.t.chartXAxis,
+          style: {
+            fontFamily: '"Hanken Grotesk", sans-serif',
+            fontWeight: '600',
+            fontSize: '13px',
+            color: mutedColor
+          }
+        },
+        labels: {
+          style: {
+            fontFamily: '"IBM Plex Mono", monospace',
+            fontSize: '12px',
+            color: mutedColor
+          }
+        },
+        gridLineColor,
+        lineColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)',
+        tickColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)'
+      },
+      yAxis: {
+        title: {
+          text: this.t.chartYAxis,
+          style: {
+            fontFamily: '"Hanken Grotesk", sans-serif',
+            fontWeight: '600',
+            fontSize: '13px',
+            color: mutedColor
+          }
+        },
+        labels: {
+          style: {
+            fontFamily: '"IBM Plex Mono", monospace',
+            fontSize: '12px',
+            color: mutedColor
+          }
+        },
+        gridLineColor
+      },
+      legend: {
+        itemStyle: {
+          fontFamily: '"Hanken Grotesk", sans-serif',
+          fontWeight: '500',
+          fontSize: '13px',
+          color: textColor
+        },
+        itemHoverStyle: {
+          color: selectColor
+        }
+      },
       tooltip: {
         useHTML: true,
+        backgroundColor: isDark ? '#24292e' : '#f4f6f8',
+        borderColor: isDark ? '#48525c' : '#c8d0d8',
+        borderRadius: 2,
+        shadow: false,
+        style: {
+          color: textColor,
+          fontFamily: '"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif',
+          fontSize: '13px'
+        },
         formatter: function () {
           const point = this as Highcharts.Point;
-          let tooltip = `Name: <b>${point.name}</b><br>`;
+          let tooltip = `<div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:14px;margin-bottom:4px;border-bottom:1px solid ${gridLineColor};padding-bottom:3px;">${point.name}</div>`;
           const options = point.options as any;
           for (const tooltipName of Object.keys(options)) {
             if (options[tooltipName] && !NOT_DISPLAYED.has(tooltipName)) {
-              // @ts-ignore
-              tooltip += `${tooltipName}: <b>${point[tooltipName]}</b><br>`;
+              tooltip += `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;"><span style="color:${mutedColor}">${tooltipName}:</span> <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;">${options[tooltipName]}</span></div>`;
             }
           }
           return tooltip;
@@ -171,7 +249,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
           name: this.t.chartSeriesGames,
           marker: {
             symbol: 'circle',
-            color: 'rgba(237,86,27,0.5)'
+            fillColor: gamesColor
           },
           data: games,
         },
@@ -180,7 +258,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
           name: this.t.chartSeriesExpansions,
           marker: {
             symbol: 'square',
-            color: 'rgba(5,141,199,0.5)'
+            fillColor: expansionsColor
           },
           data: expansions,
         },
@@ -191,8 +269,8 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
             radius: isMobileDevice ? 3.5 : 2.5,
             states: {
               select: {
-                fillColor: 'red',
-                lineColor: 'black',
+                fillColor: selectColor,
+                lineColor: textColor,
                 lineWidth: 2,
                 radius: isMobileDevice ? 7 : 6
               }
@@ -244,4 +322,3 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
     return tableConfig[key]?.[`translation${locale}`] || key;
   }
 }
-

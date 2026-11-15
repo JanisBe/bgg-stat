@@ -12,14 +12,20 @@ import {ColumnMenuService} from './column-menu.service';
         class="column-menu-btn"
         (click)="openMenu($event)"
         [attr.aria-label]="menuLabel"
-      >⋮</button>
+      >
+        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+          <circle cx="8" cy="3" r="1.5"/>
+          <circle cx="8" cy="8" r="1.5"/>
+          <circle cx="8" cy="13" r="1.5"/>
+        </svg>
+      </button>
     </div>
   `,
   styles: [`
     .inner-header {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: var(--space-2xs);
       width: 100%;
       min-width: 0;
     }
@@ -29,21 +35,32 @@ import {ColumnMenuService} from './column-menu.service';
       text-overflow: ellipsis;
       flex: 1;
       min-width: 0;
+      font-family: var(--font-display);
+      font-weight: 600;
+      letter-spacing: var(--tracking-display);
     }
 
     .column-menu-btn {
       flex-shrink: 0;
-      border: none;
+      border: var(--rule-hair) solid transparent;
       background: transparent;
       cursor: pointer;
-      padding: 0 4px;
-      font-size: 14px;
+      padding: var(--space-3xs) var(--space-2xs);
+      border-radius: var(--radius-pill);
+      color: var(--color-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       line-height: 1;
-      color: #666;
-    }
 
-    .column-menu-btn:hover {
-      color: #000;
+      &:hover {
+        color: var(--color-ink);
+        background: var(--color-paper-3);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
+      }
     }
   `],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -68,7 +85,8 @@ export class InnerHeaderComponent {
     event.preventDefault();
     this.columnMenuService.open({
       colId: this.params.column.getColId(),
-      anchor: event.currentTarget as HTMLElement,
+      clientX: event.clientX,
+      clientY: event.clientY,
     });
   }
 }

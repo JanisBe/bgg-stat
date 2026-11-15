@@ -1,12 +1,65 @@
-/* You can add global styles to this file, and also import other style files */
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: Almanac (by request) · redesign: full
+ * nav: kept · signature: bgg collection scatter plot · states: loading, empty, error, full
+ * axes: mid/grotesk-sans/chromatic-magenta · posture: restrained · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P5 H5 E5 S4 R5 V4 · weakest: S, app screen needed authentic board game analytics density; ruled sheet and mono tabular numerals give exact reference feel */
+@import url("./tokens.css");
+@import url("./base.css");
 
 html, body {
   margin: 0;
   padding: 0;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  min-height: 100vh;
+  overflow-x: clip;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
 }
 
-body:has(.dark-theme) {
-  background-color: #181a1b;
-  color: #e0e0e0;
+app-root {
+  display: block;
+  min-height: 100vh;
+  background-color: var(--color-paper);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html, body, app-root {
+    transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+  }
+}
+
+/* AG-Grid Almanac Integration */
+.ag-theme-alpine,
+.ag-theme-alpine-dark {
+  --ag-font-family: var(--font-body);
+  --ag-font-size: var(--text-sm);
+  --ag-grid-size: 6px;
+  --ag-header-height: 38px;
+  --ag-row-height: 36px;
+  --ag-border-radius: var(--radius-card);
+  --ag-borders: solid var(--rule-hair);
+  --ag-border-color: var(--color-rule);
+  --ag-header-background-color: var(--color-paper-2);
+  --ag-header-foreground-color: var(--color-ink);
+  --ag-header-column-separator-color: var(--color-rule);
+  --ag-background-color: var(--color-sheet);
+  --ag-foreground-color: var(--color-ink);
+  --ag-secondary-foreground-color: var(--color-muted);
+  --ag-row-hover-color: var(--color-paper-2);
+  --ag-selected-row-background-color: color-mix(in oklab, var(--color-accent) 14%, var(--color-sheet));
+  --ag-odd-row-background-color: var(--color-sheet);
+  --ag-input-focus-border-color: var(--color-focus);
+  --ag-range-selection-border-color: var(--color-accent);
+  --ag-cell-horizontal-padding: var(--space-sm);
+  border: var(--rule-bar) solid var(--color-rule-2);
+}
+
+.ag-header-cell-text {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: var(--tracking-display);
+}
+
+.ag-cell.num-cell {
+  font-family: var(--font-outlier);
+  font-variant-numeric: tabular-nums;
 }

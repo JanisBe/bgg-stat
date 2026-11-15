@@ -6,33 +6,86 @@ import { I18nService } from './i18n';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="info-section" [class.dark-theme]="isDarkMode()">
-      <br>
-      <br>
-      <h2>{{ t.infoTitle }}</h2>
-      {{ t.infoTextPart1 }}<span class="bold" (click)="addUserName()">{{ t.infoTextClickHere }}</span>{{ t.infoTextPart2 }}
-      <h2>{{ t.howToUseTitle }}</h2>
-      <div [innerHTML]="t.howToUseText"></div>
+    <div class="info-section sheet" [class.dark-theme]="isDarkMode()">
+      <div class="info-block">
+        <h2 class="section-heading">{{ t.infoTitle }}</h2>
+        <p class="info-prose">
+          {{ t.infoTextPart1 }}<button type="button" class="action-link" (click)="addUserName()">{{ t.infoTextClickHere }}</button>{{ t.infoTextPart2 }}
+        </p>
+      </div>
+
+      <div class="rule-divider"></div>
+
+      <div class="info-block">
+        <h2 class="section-heading">{{ t.howToUseTitle }}</h2>
+        <div class="how-to-content" [innerHTML]="t.howToUseText"></div>
+      </div>
     </div>
   `,
   styles: [`
-    .bold {
-      font-weight: bold;
-      color: blue;
-      text-decoration: underline;
-      cursor: pointer;
+    .info-section {
+      background: var(--color-sheet);
+      border: var(--rule-bar) solid var(--color-rule-2);
+      border-radius: var(--radius-card);
+      padding: var(--space-lg) var(--space-xl);
+      margin: var(--space-md) 0;
+      color: var(--color-ink);
+      font-family: var(--font-body);
+      max-width: 900px;
     }
 
-    .info-section.dark-theme {
-      color: #e0e0e0;
+    .info-block {
+      margin: var(--space-sm) 0;
+    }
 
-      .bold {
-        color: #63b3ed;
+    .section-heading {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: var(--text-section);
+      letter-spacing: var(--tracking-display);
+      color: var(--color-ink);
+      margin-bottom: var(--space-xs);
+    }
+
+    .info-prose {
+      font-size: var(--text-md);
+      line-height: 1.6;
+      color: var(--color-ink-2);
+    }
+
+    .action-link {
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      color: var(--color-accent);
+      text-decoration: underline;
+      text-underline-offset: 0.16em;
+      text-decoration-thickness: 1px;
+      cursor: pointer;
+      display: inline;
+
+      &:hover {
+        color: var(--color-accent-2);
       }
 
-      h2 {
-        color: #f1f3f4;
+      &:focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
       }
+    }
+
+    .rule-divider {
+      height: var(--rule-hair);
+      background: var(--color-rule);
+      margin: var(--space-md) 0;
+    }
+
+    .how-to-content {
+      font-size: var(--text-md);
+      line-height: 1.65;
+      color: var(--color-ink-2);
     }
   `]
 })
@@ -48,4 +101,3 @@ export class InfoSectionComponent {
     }
   }
 }
-
