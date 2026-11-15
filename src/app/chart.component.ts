@@ -13,10 +13,10 @@ import {
 import * as Highcharts from 'highcharts';
 import { Chart } from 'highcharts';
 import { I18nService } from './i18n';
-import { tableConfig } from './tableConfig';
+import { formatNumberPrecision, getColumnLabel, tableConfig } from './tableConfig';
 import { DataPoint, StringKeyValueMap } from './models';
 
-const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', 'rating', 'weight', 'objectid']);
+const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', 'Name', 'rating', 'weight', 'objectid']);
 
 @Component({
   selector: 'app-chart',
@@ -237,7 +237,8 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
           const options = point.options as any;
           for (const tooltipName of Object.keys(options)) {
             if (options[tooltipName] && !NOT_DISPLAYED.has(tooltipName)) {
-              tooltip += `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;"><span style="color:${mutedColor}">${tooltipName}:</span> <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;">${options[tooltipName]}</span></div>`;
+              const val = formatNumberPrecision(options[tooltipName], 2);
+              tooltip += `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;"><span style="color:${mutedColor}">${tooltipName}:</span> <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;">${val}</span></div>`;
             }
           }
           return tooltip;
@@ -299,7 +300,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
     return dataPoints.map((point) => {
       const additionalProps: StringKeyValueMap = {};
       Object.keys(tableConfig).forEach(key => {
-        if (visibleCols.has(key) && !(key in additionalProps)) {
+        if (key !== 'objectname' && visibleCols.has(key) && !(key in additionalProps)) {
           const translatedKey = this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
           additionalProps[translatedKey] = point[key];
         }
@@ -317,8 +318,6 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
   }
 
   private getTranslation(key: string): string {
-    const browserLang = typeof navigator !== 'undefined' ? (navigator.language || 'en') : 'en';
-    const locale = browserLang.startsWith('pl') ? 'Pl' : 'En';
-    return tableConfig[key]?.[`translation${locale}`] || key;
+    return getColumnLabel(key, this.i18n.currentLang());
   }
 }

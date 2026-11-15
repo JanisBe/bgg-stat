@@ -98,8 +98,9 @@ Responsibilities:
 Defines every CSV field the app knows about:
 
 - `visible` – whether the column is shown by default in the table and tooltip.
-- `type` – `"n"` (numeric) or `"b"` (boolean), used for AG-Grid cell data types and filtering.
-- `translationPl` / `translationEn` – localized column header labels.
+- `type` – `'number'`, `'boolean'` or `'text'`, used for AG-Grid cell data types and filtering.
+- `label` – localized column labels (`{ pl: string, en: string }`).
+- Helper functions: `getColumnLabel(key, lang)` and `getColumnDataType(key)`.
 
 ---
 

@@ -17,6 +17,7 @@ import {
   ColumnHeaderContextMenuEvent,
   ColumnVisibleEvent,
   GridApi,
+  ITooltipParams,
   isColumn,
   ModuleRegistry,
   provideGlobalGridOptions,
@@ -24,10 +25,11 @@ import {
   RowClickedEvent,
   RowDoubleClickedEvent,
   RowStyle,
+  ValueFormatterParams,
 } from 'ag-grid-community';
 import { AgGridAngular } from 'ag-grid-angular';
 
-import { gridOptions, tableConfig } from './tableConfig';
+import { formatNumberPrecision, getColumnDataType, getColumnLabel, gridOptions, tableConfig } from './tableConfig';
 import { ColumnMenuRequest, ColumnMenuService } from './column-menu.service';
 import { InnerHeaderComponent } from './inner-header.component';
 import { environment } from '../environments/environment';
@@ -652,8 +654,7 @@ export class AppComponent {
   }
 
   getTranslation(key: string): string {
-    const locale = this.currentLang() === 'pl' ? 'Pl' : 'En';
-    return tableConfig[key]?.[`translation${locale}`] || key;
+    return getColumnLabel(key, this.currentLang());
   }
 
   setLanguage(lang: AppLanguage): void {
@@ -969,15 +970,7 @@ export class AppComponent {
   }
 
   private calculateCellDataType(key: string): string {
-    const entry = tableConfig[key];
-    if (entry.type) {
-      if (entry.type === 'n') {
-        return 'number';
-      } else if (entry.type === 'b') {
-        return 'boolean';
-      }
-    }
-    return 'text';
+    return getColumnDataType(key);
   }
 
   onOptionToggled(entry: { key: string; visible: boolean }): void {
@@ -1035,7 +1028,7 @@ export class AppComponent {
       return;
     }
 
-    const option = this.checkboxOptions().find((o) => o.key === colId);
+    const option = this.checkboxOptions().some((o) => o.key === colId);
     if (option) {
       this.syncColumnVisibility(colId, false, true);
       this.onColumnVisibilityChanged();
@@ -1240,16 +1233,28 @@ export class AppComponent {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const visibleCols = this.visibleColumns();
 
-    const columnNames = Object.keys(collection || {}).map((key) => ({
-      field: key,
-      headerName: this.generateName(key),
-      headerTooltip: this.generateName(key),
-      filter: true,
-      sortable: true,
-      hide: !visibleCols.has(key),
-      floatingFilter: true,
-      cellDataType: this.calculateCellDataType(key),
-    } as ColDef));
+    const columnNames = Object.keys(collection || {}).map((key) => {
+      const type = this.calculateCellDataType(key);
+      const isNumber = type === 'number';
+
+      return {
+        field: key,
+        headerName: this.generateName(key),
+        headerTooltip: this.generateName(key),
+        filter: true,
+        sortable: true,
+        hide: !visibleCols.has(key),
+        floatingFilter: true,
+        cellDataType: type,
+        valueFormatter: isNumber
+          ? (params: ValueFormatterParams) => formatNumberPrecision(params.value, 2)
+          : undefined,
+        tooltipValueGetter: (params: ITooltipParams) => {
+          if (params.value == null || params.value === '') return undefined;
+          return isNumber ? formatNumberPrecision(params.value, 2) : String(params.value);
+        },
+      } as ColDef;
+    });
 
     columnNames.forEach((col) => {
       if (col.field === 'objectname') {

@@ -1,72 +1,345 @@
-import { GridOptions } from "ag-grid-community";
+import { GridOptions, ITooltipParams } from 'ag-grid-community';
+import { AppLanguage } from './i18n';
 
-export const tableConfig: TooltipName = {
-  "objectname": { visible: true, translationPl: "Nazwa", translationEn: "Name" },
-  "average": { visible: true, "type": "n", translationPl: "Średnia", },
-  "avgweight": { visible: true, "type": "n", translationPl: "Średnia waga", translationEn: "Average weight" },
-  "rank": { visible: true, "type": "n", translationPl: "Miejsce" },
-  "objecttype": { visible: false, translationPl: "Typ", translationEn: "Object type" },
-  "bggbestplayers": { visible: true, translationPl: "Najlepiej dla (BGG)", translationEn: "Best for (BGG)" },
-  "rating": { visible: true, "type": "n", translationPl: "Ocena" },
-  "weight": { visible: false, "type": "n", translationPl: "Waga" },
-  "baverage": { visible: true, "type": "n", translationPl: "Średnia (BGG)", translationEn: "Average (BGG)" },
-  "originalname": { visible: false, translationPl: "Nazwa oryginalna", translationEn: "Original name" },
-  "minplayers": { visible: false, "type": "n", translationPl: "Min graczy" },
-  "maxplayers": { visible: false, "type": "n", translationPl: "Max graczy" },
-  "playingtime": { visible: false, "type": "n", translationPl: "Czas gry" },
-  "maxplaytime": { visible: false, "type": "n", translationPl: "Maks czas gry" },
-  "minplaytime": { visible: false, "type": "n", translationPl: "Min czas gry" },
-  "yearpublished": { visible: false, "type": "n", translationPl: "Rok wydania" },
-  "bggrecplayers": { visible: false, translationPl: "Ilość graczy", translationEn: "Number of players" },
-  "bggrecagerange": { visible: false, "type": "n", translationPl: "Wiek (BGG)", translationEn: "Age (BGG)" },
-  "bgglanguagedependence": { visible: false, translationPl: "Zależności jezykowe", translationEn: "Language dependence" },
-  "itemtype": { visible: false, translationPl: "Typ" },
-  "objectid": { visible: false, "type": "n", translationPl: "BGG ID", translationEn: "BGG ID" },
-  "comment": { visible: false, translationPl: "Komentarz" },
-  "year": { visible: false },
-  "numplays": { visible: false, "type": "n" },
-  "own": { visible: false, "type": "b" },
-  "fortrade": { visible: false, "type": "b" },
-  "want": { visible: false, "type": "b" },
-  "wanttobuy": { visible: false, "type": "b" },
-  "wanttoplay": { visible: false, "type": "b" },
-  "prevowned": { visible: false, "type": "b" },
-  "preordered": { visible: false, "type": "b" },
-  "wishlist": { visible: false, "type": "b" },
-  "wishlistpriority": { visible: false, "type": "n" },
-  "wishlistcomment": { visible: false },
-  "conditiontext": { visible: false },
-  "haspartslist": { visible: false },
-  "wantpartslist": { visible: false },
-  "collid": { visible: false, "type": "n" },
-  "numowned": { visible: false, "type": "n" },
-  "publisherid": { visible: false },
-  "imageid": { visible: false },
-  "language": { visible: false },
-  "other": { visible: false },
-  "barcode": { visible: false },
-  "pricepaid": { visible: false },
-  "pp_currency": { visible: false },
-  "currvalue": { visible: false },
-  "cv_currency": { visible: false },
-  "acquisitiondate": { visible: false },
-  "acquiredfrom": { visible: false },
-  "quantity": { visible: false },
-  "privatecomment": { visible: false },
-  "invlocation": { visible: false },
-  "invdate": { visible: false },
-  "version_publishers": { visible: false },
-  "version_languages": { visible: false },
-  "version_yearpublished": { visible: false, "type": "n" },
-  "version_nickname": { visible: false },
+export type ColumnDataType = 'number' | 'boolean' | 'text';
+
+export interface ColumnDefinition {
+  visible: boolean;
+  type?: ColumnDataType;
+  label: {
+    pl: string;
+    en: string;
+  };
 }
 
+export type TableConfig = Record<string, ColumnDefinition>;
+/** Legacy alias for TableConfig */
+export type TooltipName = TableConfig;
+
+export const tableConfig: TableConfig = {
+  objectname: {
+    visible: true,
+    type: 'text',
+    label: { pl: 'Nazwa', en: 'Name' },
+  },
+  average: {
+    visible: true,
+    type: 'number',
+    label: { pl: 'Średnia', en: 'Average rating' },
+  },
+  avgweight: {
+    visible: true,
+    type: 'number',
+    label: { pl: 'Średnia waga', en: 'Average weight' },
+  },
+  rank: {
+    visible: true,
+    type: 'number',
+    label: { pl: 'Miejsce w rankingu', en: 'Rank' },
+  },
+  objecttype: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Typ obiektu', en: 'Object type' },
+  },
+  bggbestplayers: {
+    visible: true,
+    type: 'text',
+    label: { pl: 'Najlepiej dla (BGG)', en: 'Best for (BGG)' },
+  },
+  rating: {
+    visible: true,
+    type: 'number',
+    label: { pl: 'Ocena', en: 'Rating' },
+  },
+  weight: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Waga', en: 'Weight' },
+  },
+  baverage: {
+    visible: true,
+    type: 'number',
+    label: { pl: 'Średnia (BGG)', en: 'Average (BGG)' },
+  },
+  originalname: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Nazwa oryginalna', en: 'Original name' },
+  },
+  minplayers: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Min. graczy', en: 'Min players' },
+  },
+  maxplayers: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Maks. graczy', en: 'Max players' },
+  },
+  playingtime: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Czas gry', en: 'Playing time' },
+  },
+  maxplaytime: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Maks. czas gry', en: 'Max play time' },
+  },
+  minplaytime: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Min. czas gry', en: 'Min play time' },
+  },
+  yearpublished: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Rok wydania', en: 'Year published' },
+  },
+  bggrecplayers: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Liczba graczy (rekomendacja)', en: 'Recommended players' },
+  },
+  bggrecagerange: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Wiek (BGG)', en: 'Age (BGG)' },
+  },
+  bgglanguagedependence: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Zależności językowe', en: 'Language dependence' },
+  },
+  itemtype: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Rodzaj gry', en: 'Item type' },
+  },
+  objectid: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'BGG ID', en: 'BGG ID' },
+  },
+  comment: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Komentarz', en: 'Comment' },
+  },
+  year: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Rok', en: 'Year' },
+  },
+  numplays: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Liczba partii', en: 'Number of plays' },
+  },
+  own: {
+    visible: false,
+    type: 'boolean',
+    label: { pl: 'Posiadane', en: 'Owned' },
+  },
+  fortrade: {
+    visible: false,
+    type: 'boolean',
+    label: { pl: 'Na wymianę', en: 'For trade' },
+  },
+  want: {
+    visible: false,
+    type: 'boolean',
+    label: { pl: 'Poszukiwane', en: 'Want in trade' },
+  },
+  wanttobuy: {
+    visible: false,
+    type: 'boolean',
+    label: { pl: 'Chcę kupić', en: 'Want to buy' },
+  },
+  wanttoplay: {
+    visible: false,
+    type: 'boolean',
+    label: { pl: 'Chcę zagrać', en: 'Want to play' },
+  },
+  prevowned: {
+    visible: false,
+    type: 'boolean',
+    label: { pl: 'Wcześniej posiadane', en: 'Previously owned' },
+  },
+  preordered: {
+    visible: false,
+    type: 'boolean',
+    label: { pl: 'W przedsprzedaży', en: 'Preordered' },
+  },
+  wishlist: {
+    visible: false,
+    type: 'boolean',
+    label: { pl: 'Lista życzeń', en: 'Wishlist' },
+  },
+  wishlistpriority: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Priorytet listy życzeń', en: 'Wishlist priority' },
+  },
+  wishlistcomment: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Komentarz listy życzeń', en: 'Wishlist comment' },
+  },
+  conditiontext: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Stan egzemplarza', en: 'Condition' },
+  },
+  haspartslist: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Lista części (posiada)', en: 'Has parts list' },
+  },
+  wantpartslist: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Lista części (chcę)', en: 'Want parts list' },
+  },
+  collid: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'ID kolekcji', en: 'Collection ID' },
+  },
+  numowned: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Liczba posiadaczy', en: 'Number owned' },
+  },
+  publisherid: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'ID wydawcy', en: 'Publisher ID' },
+  },
+  imageid: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'ID obrazka', en: 'Image ID' },
+  },
+  language: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Język', en: 'Language' },
+  },
+  other: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Inne', en: 'Other' },
+  },
+  barcode: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Kod kreskowy', en: 'Barcode' },
+  },
+  pricepaid: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Zapłacona cena', en: 'Price paid' },
+  },
+  pp_currency: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Waluta zakupu', en: 'Price currency' },
+  },
+  currvalue: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Aktualna wartość', en: 'Current value' },
+  },
+  cv_currency: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Waluta wartości', en: 'Value currency' },
+  },
+  acquisitiondate: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Data nabycia', en: 'Acquisition date' },
+  },
+  acquiredfrom: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Źródło nabycia', en: 'Acquired from' },
+  },
+  quantity: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Liczba sztuk', en: 'Quantity' },
+  },
+  privatecomment: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Prywatny komentarz', en: 'Private comment' },
+  },
+  invlocation: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Lokalizacja', en: 'Inventory location' },
+  },
+  invdate: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Data inwentaryzacji', en: 'Inventory date' },
+  },
+  version_publishers: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Wydawcy wydania', en: 'Version publishers' },
+  },
+  version_languages: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Języki wydania', en: 'Version languages' },
+  },
+  version_yearpublished: {
+    visible: false,
+    type: 'number',
+    label: { pl: 'Rok wydania wersji', en: 'Version year published' },
+  },
+  version_nickname: {
+    visible: false,
+    type: 'text',
+    label: { pl: 'Nazwa wydania', en: 'Version nickname' },
+  },
+};
+
+export function getColumnLabel(key: string, lang: AppLanguage = 'pl'): string {
+  const col = tableConfig[key];
+  if (!col) return key;
+  return col.label[lang] || col.label.en || col.label.pl || key;
+}
+
+export function getColumnDataType(key: string): ColumnDataType {
+  return tableConfig[key]?.type ?? 'text';
+}
+
+export function formatNumberPrecision(value: any, decimals = 2): string {
+  if (value == null || value === '') return '';
+  const num = typeof value === 'number' ? value : Number.parseFloat(value);
+  if (Number.isNaN(num)) return String(value);
+  return Number.isInteger(num) ? num.toString() : num.toFixed(decimals);
+}
+
+// ==========================================
+// AG-Grid Default Configuration
+// ==========================================
 
 export const gridOptions: GridOptions = {
+  tooltipShowDelay: 300,
   defaultColDef: {
     sortable: true,
     suppressHeaderFilterButton: true,
     suppressHeaderContextMenu: true,
+    tooltipValueGetter: (params: ITooltipParams) => {
+      if (params.value == null || params.value === '') return undefined;
+      return formatNumberPrecision(params.value, 2);
+    },
   },
   autoSizeStrategy: {
     type: 'fitGridWidth',
@@ -74,17 +347,8 @@ export const gridOptions: GridOptions = {
     columnLimits: [
       {
         colId: 'objectname',
-        minWidth: 200
-      }
-    ]
+        minWidth: 200,
+      },
+    ],
   },
-};
-
-export type TooltipName = {
-  [key: string]: {
-    visible: boolean;
-    type?: string; // n - number, b - boolean, s - string
-    translationPl?: string;
-    translationEn?: string;
-  };
 };
