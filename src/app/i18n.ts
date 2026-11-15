@@ -300,3 +300,35 @@ export function getActiveTranslations(lang?: AppLanguage): TranslationKeys {
   const selected = lang || getInitialLanguage();
   return selected === 'pl' ? translationsPl : translationsEn;
 }
+
+export const AG_GRID_LOCALE_PL: Record<string, string> = {
+  selectAll: '(Zaznacz wszystko)',
+  selectAllSearchResults: '(Zaznacz wszystkie wyniki wyszukiwania)',
+  searchOoo: 'Szukaj...',
+  blanks: '(Puste)',
+  noMatches: 'Brak pasujących pozycji',
+  filterOoo: 'Filtruj...',
+  applyFilter: 'Zastosuj',
+  resetFilter: 'Wyczyść',
+  clearFilter: 'Wyczyść',
+  cancelFilter: 'Anuluj',
+  textFilter: 'Filtr tekstowy',
+  numberFilter: 'Filtr liczbowy',
+  setFilter: 'Lista wartości',
+  contains: 'Zawiera',
+  notContains: 'Nie zawiera',
+  startsWith: 'Zaczyna się od',
+  endsWith: 'Kończy się na',
+  equals: 'Równe',
+  notEqual: 'Różne od',
+  lessThan: 'Mniejsze niż',
+  lessThanOrEqual: 'Mniejsze lub równe',
+  greaterThan: 'Większe niż',
+  greaterThanOrEqual: 'Większe lub równe',
+  inRange: 'W przedziale',
+  inRangeStart: 'Od',
+  inRangeEnd: 'Do',
+  andCondition: 'ORAZ',
+  orCondition: 'LUB',
+};
+

@@ -3,9 +3,17 @@ import { AppLanguage } from './i18n';
 
 export type ColumnDataType = 'number' | 'boolean' | 'text';
 
+export type ColumnFilterType =
+  | 'agSetColumnFilter'
+  | 'agNumberColumnFilter'
+  | 'agTextColumnFilter'
+  | 'agMultiColumnFilter';
+
 export interface ColumnDefinition {
   visible: boolean;
   type?: ColumnDataType;
+  filter?: ColumnFilterType;
+  filterParams?: Record<string, any>;
   label: {
     pl: string;
     en: string;
@@ -20,121 +28,157 @@ export const tableConfig: TableConfig = {
   objectname: {
     visible: true,
     type: 'text',
+    filter: 'agTextColumnFilter',
     label: { pl: 'Nazwa', en: 'Name' },
   },
   average: {
     visible: true,
     type: 'number',
+    filter: 'agNumberColumnFilter',
     label: { pl: 'Średnia', en: 'Average rating' },
   },
   avgweight: {
     visible: true,
     type: 'number',
+    filter: 'agNumberColumnFilter',
     label: { pl: 'Średnia waga', en: 'Average weight' },
   },
   rank: {
     visible: true,
     type: 'number',
+    filter: 'agNumberColumnFilter',
     label: { pl: 'Miejsce w rankingu', en: 'Rank' },
   },
   objecttype: {
     visible: false,
     type: 'text',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Typ obiektu', en: 'Object type' },
   },
   bggbestplayers: {
     visible: true,
     type: 'text',
+    filter: 'agMultiColumnFilter',
+    filterParams: {
+      filters: [
+        { filter: 'agTextColumnFilter', filterParams: { defaultOption: 'contains' } },
+        { filter: 'agSetColumnFilter' },
+      ],
+    },
     label: { pl: 'Najlepiej dla (BGG)', en: 'Best for (BGG)' },
   },
   rating: {
     visible: true,
     type: 'number',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Ocena', en: 'Rating' },
   },
   weight: {
     visible: false,
     type: 'number',
+    filter: 'agNumberColumnFilter',
     label: { pl: 'Waga', en: 'Weight' },
   },
   baverage: {
     visible: true,
     type: 'number',
+    filter: 'agNumberColumnFilter',
     label: { pl: 'Średnia (BGG)', en: 'Average (BGG)' },
   },
   originalname: {
     visible: false,
     type: 'text',
+    filter: 'agTextColumnFilter',
     label: { pl: 'Nazwa oryginalna', en: 'Original name' },
   },
   minplayers: {
     visible: false,
     type: 'number',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Min. graczy', en: 'Min players' },
   },
   maxplayers: {
     visible: false,
     type: 'number',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Maks. graczy', en: 'Max players' },
   },
   playingtime: {
     visible: false,
     type: 'number',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Czas gry', en: 'Playing time' },
   },
   maxplaytime: {
     visible: false,
     type: 'number',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Maks. czas gry', en: 'Max play time' },
   },
   minplaytime: {
     visible: false,
     type: 'number',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Min. czas gry', en: 'Min play time' },
   },
   yearpublished: {
     visible: false,
     type: 'number',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Rok wydania', en: 'Year published' },
   },
   bggrecplayers: {
     visible: false,
     type: 'text',
+    filter: 'agMultiColumnFilter',
+    filterParams: {
+      filters: [
+        { filter: 'agTextColumnFilter', filterParams: { defaultOption: 'contains' } },
+        { filter: 'agSetColumnFilter' },
+      ],
+    },
     label: { pl: 'Liczba graczy (rekomendacja)', en: 'Recommended players' },
   },
   bggrecagerange: {
     visible: false,
     type: 'number',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Wiek (BGG)', en: 'Age (BGG)' },
   },
   bgglanguagedependence: {
     visible: false,
     type: 'text',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Zależności językowe', en: 'Language dependence' },
   },
   itemtype: {
     visible: false,
     type: 'text',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Rodzaj gry', en: 'Item type' },
   },
   objectid: {
     visible: false,
     type: 'number',
+    filter: 'agNumberColumnFilter',
     label: { pl: 'BGG ID', en: 'BGG ID' },
   },
   comment: {
     visible: false,
     type: 'text',
+    filter: 'agTextColumnFilter',
     label: { pl: 'Komentarz', en: 'Comment' },
   },
   year: {
     visible: false,
     type: 'number',
+    filter: 'agSetColumnFilter',
     label: { pl: 'Rok', en: 'Year' },
   },
   numplays: {
     visible: false,
     type: 'number',
+    filter: 'agNumberColumnFilter',
     label: { pl: 'Liczba partii', en: 'Number of plays' },
   },
   own: {
@@ -317,6 +361,18 @@ export function getColumnLabel(key: string, lang: AppLanguage = 'pl'): string {
 
 export function getColumnDataType(key: string): ColumnDataType {
   return tableConfig[key]?.type ?? 'text';
+}
+
+export function getColumnFilter(key: string): ColumnFilterType {
+  const col = tableConfig[key];
+  if (col?.filter) return col.filter;
+  const type = getColumnDataType(key);
+  if (type === 'number') return 'agNumberColumnFilter';
+  return 'agTextColumnFilter';
+}
+
+export function getColumnFilterParams(key: string): Record<string, any> | undefined {
+  return tableConfig[key]?.filterParams;
 }
 
 export function formatNumberPrecision(value: any, decimals = 2): string {

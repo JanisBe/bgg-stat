@@ -30,12 +30,12 @@ import {
 import { AgGridAngular } from 'ag-grid-angular';
 import { AllEnterpriseModule, LicenseManager } from 'ag-grid-enterprise';
 
-import { formatNumberPrecision, getColumnDataType, getColumnLabel, gridOptions, tableConfig } from './tableConfig';
+import { formatNumberPrecision, getColumnDataType, getColumnFilter, getColumnFilterParams, getColumnLabel, gridOptions, tableConfig } from './tableConfig';
 import { LicenseKey } from './license';
 import { ColumnMenuRequest, ColumnMenuService } from './column-menu.service';
 import { InnerHeaderComponent } from './inner-header.component';
 import { environment } from '../environments/environment';
-import { AppLanguage, I18nService, TranslationKeys } from './i18n';
+import { AG_GRID_LOCALE_PL, AppLanguage, I18nService, TranslationKeys } from './i18n';
 import {
   clearUiPreferences,
   hasUiPreferences,
@@ -612,6 +612,7 @@ export class AppComponent {
 
   gridOptions = {
     ...gridOptions,
+    localeText: this.i18n.currentLang() === 'pl' ? AG_GRID_LOCALE_PL : undefined,
     defaultColDef: {
       ...gridOptions.defaultColDef,
       innerHeaderComponent: InnerHeaderComponent,
@@ -1239,12 +1240,15 @@ export class AppComponent {
     const columnNames = Object.keys(collection || {}).map((key) => {
       const type = this.calculateCellDataType(key);
       const isNumber = type === 'number';
+      const filter = getColumnFilter(key);
+      const filterParams = getColumnFilterParams(key);
 
       return {
         field: key,
         headerName: this.generateName(key),
         headerTooltip: this.generateName(key),
-        filter: true,
+        filter,
+        filterParams,
         sortable: true,
         hide: !visibleCols.has(key),
         floatingFilter: true,
