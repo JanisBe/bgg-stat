@@ -330,6 +330,8 @@ export function formatNumberPrecision(value: any, decimals = 2): string {
 // AG-Grid Default Configuration
 // ==========================================
 
+export { LicenseKey } from './license';
+
 export const gridOptions: GridOptions = {
   tooltipShowDelay: 300,
   defaultColDef: {
