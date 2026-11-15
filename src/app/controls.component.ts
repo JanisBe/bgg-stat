@@ -67,7 +67,7 @@ import { BggAuthService } from './bgg-auth.service';
 
         @if (isExpanded()) {
           <div class="options-backdrop" (click)="isExpanded.set(false)"></div>
-          <div (mouseleave)="isExpanded.set(false)" id="options-container" class="options-dropdown sheet">
+          <div id="options-container" class="options-dropdown sheet">
             <div class="bgg-token-section">
               <div class="bgg-token-header">
                 <span class="section-title">{{ t.bggApiSettings }}</span>
