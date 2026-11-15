@@ -330,5 +330,39 @@ export const AG_GRID_LOCALE_PL: Record<string, string> = {
   inRangeEnd: 'Do',
   andCondition: 'ORAZ',
   orCondition: 'LUB',
+
+  // Row grouping & Aggregations
+  rowGroupColumnsEmptyMessage: 'Przeciągnij tutaj nagłówek kolumny, aby pogrupować wiersze',
+  groups: 'Grupy',
+  group: 'Grupa',
+  values: 'Wartości',
+  pivots: 'Etykiety kolumn',
+  pivotMode: 'Tryb przestawny',
+  avg: 'Średnia',
+  sum: 'Suma',
+  min: 'Min',
+  max: 'Maks',
+  count: 'Liczba',
+  totalRows: 'Wszystkie wiersze',
+  totalAndFilteredRows: 'Wiersze',
+  grandTotal: 'Łącznie',
+
+  // SideBar & Tool Panels
+  columns: 'Kolumny',
+  filters: 'Filtry',
+  pinColumn: 'Przypnij kolumnę',
+  valueAggregation: 'Agregacja wartości',
+  autosizeThiscolumn: 'Dopasuj tę kolumnę',
+  autosizeAllColumns: 'Dopasuj wszystkie kolumny',
+  resetColumns: 'Resetuj kolumny',
+  expandAll: 'Rozwiń wszystko',
+  collapseAll: 'Zwiń wszystko',
+  toolPanels: 'Panele boczne',
+
+  // Context Menu
+  copy: 'Kopiuj',
+  copyWithHeaders: 'Kopiuj z nagłówkami',
+  ctrlC: 'Ctrl+C',
+  ctrlV: 'Ctrl+V',
 };
 

@@ -50,7 +50,18 @@ app-root {
   --ag-input-focus-border-color: var(--color-focus);
   --ag-range-selection-border-color: var(--color-accent);
   --ag-cell-horizontal-padding: var(--space-sm);
+  --ag-control-panel-background-color: var(--color-paper-2);
   border: var(--rule-bar) solid var(--color-rule-2);
+}
+
+.ag-side-bar {
+  border-left: var(--rule-hair) solid var(--color-rule);
+}
+
+.ag-menu {
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-overlay);
+  border: var(--rule-hair) solid var(--color-rule);
 }
 
 .ag-header-cell-text {

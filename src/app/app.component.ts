@@ -16,9 +16,12 @@ import {
   ColDef,
   ColumnHeaderContextMenuEvent,
   ColumnVisibleEvent,
+  DefaultMenuItem,
+  GetContextMenuItemsParams,
   GridApi,
   ITooltipParams,
   isColumn,
+  MenuItemDef,
   ModuleRegistry,
   provideGlobalGridOptions,
   RowClassParams,
@@ -30,7 +33,18 @@ import {
 import { AgGridAngular } from 'ag-grid-angular';
 import { AllEnterpriseModule, LicenseManager } from 'ag-grid-enterprise';
 
-import { formatNumberPrecision, getColumnDataType, getColumnFilter, getColumnFilterParams, getColumnLabel, gridOptions, tableConfig } from './tableConfig';
+import {
+  formatNumberPrecision,
+  getColumnAggFunc,
+  getColumnDataType,
+  getColumnFilter,
+  getColumnFilterParams,
+  getColumnLabel,
+  gridOptions,
+  isColumnRowGroupEnabled,
+  isColumnValueEnabled,
+  tableConfig,
+} from './tableConfig';
 import { LicenseKey } from './license';
 import { ColumnMenuRequest, ColumnMenuService } from './column-menu.service';
 import { InnerHeaderComponent } from './inner-header.component';
@@ -613,13 +627,83 @@ export class AppComponent {
   gridOptions = {
     ...gridOptions,
     localeText: this.i18n.currentLang() === 'pl' ? AG_GRID_LOCALE_PL : undefined,
+    rowGroupPanelShow: 'never' as const,
+    groupDefaultExpanded: 1,
+    sideBar: {
+      toolPanels: [
+        {
+          id: 'columns',
+          labelDefault: 'Kolumny',
+          labelKey: 'columns',
+          iconKey: 'columns',
+          toolPanel: 'agColumnsToolPanel',
+          toolPanelParams: {
+            suppressRowGroups: true,
+            suppressValues: true,
+            suppressPivots: true,
+            suppressPivotMode: true,
+            suppressColumnFilter: false,
+            suppressColumnSelectAll: false,
+            suppressColumnExpandAll: true,
+          },
+        },
+        {
+          id: 'filters',
+          labelDefault: 'Filtry',
+          labelKey: 'filters',
+          iconKey: 'filter',
+          toolPanel: 'agFiltersToolPanel',
+        },
+      ],
+    },
+    getContextMenuItems: (params: GetContextMenuItemsParams): (DefaultMenuItem | MenuItemDef)[] => {
+      const isPl = this.i18n.currentLang() === 'pl';
+      const game = params.node?.data;
+      const objectId = game?.objectid;
+      const gameName = game?.objectname || game?.name;
+
+      const items: (DefaultMenuItem | MenuItemDef)[] = [];
+
+      if (objectId) {
+        items.push({
+          name: isPl ? `Otwórz „${gameName ?? 'grę'}” na BGG` : `Open "${gameName ?? 'game'}" on BGG`,
+          action: () => this.openBggPage(objectId),
+          icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+        });
+
+        items.push({
+          name: isPl ? 'Pokaż szczegóły gry' : 'Show game details',
+          action: () => {
+            this.selectedGame.set(game);
+            this.chartComp?.selectPointByObjectId(objectId);
+          },
+          icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+        });
+
+        items.push('separator');
+      }
+
+      items.push('copy');
+      items.push('copyWithHeaders');
+
+      return items;
+    },
+    autoGroupColumnDef: {
+      headerName: this.i18n.currentLang() === 'pl' ? 'Grupa' : 'Group',
+      minWidth: 260,
+      pinned: 'left' as const,
+      cellRendererParams: {
+        suppressCount: false,
+      },
+    },
     defaultColDef: {
       ...gridOptions.defaultColDef,
       innerHeaderComponent: InnerHeaderComponent,
     },
     isExternalFilterPresent: () => true,
     doesExternalFilterPass: (node: any) => {
-      const type = node.data.itemtype;
+      if (node.group) return true;
+      const type = node.data?.itemtype;
       if (type === 'standalone') return this.showStandalone();
       if (type === 'expansion') return this.showExpansions();
       return true;
@@ -627,7 +711,10 @@ export class AppComponent {
   };
 
   rowStyle: ((params: RowClassParams) => (RowStyle | undefined)) | undefined = (params) => {
-    if (params.data.itemtype === 'expansion') {
+    if (params.node.group) {
+      return undefined;
+    }
+    if (params.data?.itemtype === 'expansion') {
       return { background: this.isDarkMode() ? '#3a4046' : '#c8c8c8' };
     }
     return { background: this.isDarkMode() ? '#22262a' : '#ececec' };
@@ -672,6 +759,14 @@ export class AppComponent {
     if (this.dataLoaded() && this.rowData().length > 0) {
       this.columnDefs.set(this.generateColumns(this.rowData()[0]));
       if (this.gridApi) {
+        this.gridApi.setGridOption('autoGroupColumnDef', {
+          headerName: lang === 'pl' ? 'Grupa' : 'Group',
+          minWidth: 260,
+          pinned: 'left',
+          cellRendererParams: {
+            suppressCount: false,
+          },
+        });
         this.gridApi.setGridOption('columnDefs', this.columnDefs());
       }
     }
@@ -808,6 +903,7 @@ export class AppComponent {
   }
 
   onRowClicked(event: RowClickedEvent): void {
+    if (!event.data) return;
     const objectId = event.data.objectid;
 
     if (this.isTouchDevice() && this.isDoubleTap(objectId)) {
@@ -820,6 +916,7 @@ export class AppComponent {
   }
 
   onRowDoubleClicked(event: RowDoubleClickedEvent): void {
+    if (!event.data?.objectid) return;
     this.openBggPage(event.data.objectid);
   }
 
@@ -965,7 +1062,9 @@ export class AppComponent {
   onFilterChanged(): void {
     const filteredData: any[] = [];
     this.gridApi.forEachNodeAfterFilter((node) => {
-      filteredData.push(node.data);
+      if (node.data) {
+        filteredData.push(node.data);
+      }
     });
     const [games, expansions] = this.extractData(filteredData);
     this.gamesPoints.set(games);
@@ -1224,7 +1323,11 @@ export class AppComponent {
 
     if (this.gridApi) {
       const filteredData: any[] = [];
-      this.gridApi.forEachNodeAfterFilter((node) => filteredData.push(node.data));
+      this.gridApi.forEachNodeAfterFilter((node) => {
+        if (node.data) {
+          filteredData.push(node.data);
+        }
+      });
       const [games, expansions] = this.extractData(filteredData);
       this.gamesPoints.set(games);
       this.expansionPoints.set(expansions);
@@ -1242,6 +1345,9 @@ export class AppComponent {
       const isNumber = type === 'number';
       const filter = getColumnFilter(key);
       const filterParams = getColumnFilterParams(key);
+      const enableRowGroup = isColumnRowGroupEnabled(key);
+      const enableValue = isColumnValueEnabled(key);
+      const aggFunc = getColumnAggFunc(key);
 
       return {
         field: key,
@@ -1249,6 +1355,9 @@ export class AppComponent {
         headerTooltip: this.generateName(key),
         filter,
         filterParams,
+        enableRowGroup,
+        enableValue,
+        aggFunc,
         sortable: true,
         hide: !visibleCols.has(key),
         floatingFilter: true,

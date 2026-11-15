@@ -14,6 +14,9 @@ export interface ColumnDefinition {
   type?: ColumnDataType;
   filter?: ColumnFilterType;
   filterParams?: Record<string, any>;
+  enableRowGroup?: boolean;
+  enableValue?: boolean;
+  aggFunc?: string;
   label: {
     pl: string;
     en: string;
@@ -35,24 +38,31 @@ export const tableConfig: TableConfig = {
     visible: true,
     type: 'number',
     filter: 'agNumberColumnFilter',
+    enableValue: true,
+    aggFunc: 'avg',
     label: { pl: 'Średnia', en: 'Average rating' },
   },
   avgweight: {
     visible: true,
     type: 'number',
     filter: 'agNumberColumnFilter',
+    enableValue: true,
+    aggFunc: 'avg',
     label: { pl: 'Średnia waga', en: 'Average weight' },
   },
   rank: {
     visible: true,
     type: 'number',
     filter: 'agNumberColumnFilter',
+    enableValue: true,
+    aggFunc: 'min',
     label: { pl: 'Miejsce w rankingu', en: 'Rank' },
   },
   objecttype: {
     visible: false,
     type: 'text',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Typ obiektu', en: 'Object type' },
   },
   bggbestplayers: {
@@ -65,24 +75,32 @@ export const tableConfig: TableConfig = {
         { filter: 'agSetColumnFilter' },
       ],
     },
+    enableRowGroup: true,
     label: { pl: 'Najlepiej dla (BGG)', en: 'Best for (BGG)' },
   },
   rating: {
     visible: true,
     type: 'number',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
+    enableValue: true,
+    aggFunc: 'avg',
     label: { pl: 'Ocena', en: 'Rating' },
   },
   weight: {
     visible: false,
     type: 'number',
     filter: 'agNumberColumnFilter',
+    enableValue: true,
+    aggFunc: 'avg',
     label: { pl: 'Waga', en: 'Weight' },
   },
   baverage: {
     visible: true,
     type: 'number',
     filter: 'agNumberColumnFilter',
+    enableValue: true,
+    aggFunc: 'avg',
     label: { pl: 'Średnia (BGG)', en: 'Average (BGG)' },
   },
   originalname: {
@@ -95,36 +113,42 @@ export const tableConfig: TableConfig = {
     visible: false,
     type: 'number',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Min. graczy', en: 'Min players' },
   },
   maxplayers: {
     visible: false,
     type: 'number',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Maks. graczy', en: 'Max players' },
   },
   playingtime: {
     visible: false,
     type: 'number',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Czas gry', en: 'Playing time' },
   },
   maxplaytime: {
     visible: false,
     type: 'number',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Maks. czas gry', en: 'Max play time' },
   },
   minplaytime: {
     visible: false,
     type: 'number',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Min. czas gry', en: 'Min play time' },
   },
   yearpublished: {
     visible: false,
     type: 'number',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Rok wydania', en: 'Year published' },
   },
   bggrecplayers: {
@@ -137,24 +161,28 @@ export const tableConfig: TableConfig = {
         { filter: 'agSetColumnFilter' },
       ],
     },
+    enableRowGroup: true,
     label: { pl: 'Liczba graczy (rekomendacja)', en: 'Recommended players' },
   },
   bggrecagerange: {
     visible: false,
     type: 'number',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Wiek (BGG)', en: 'Age (BGG)' },
   },
   bgglanguagedependence: {
     visible: false,
     type: 'text',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Zależności językowe', en: 'Language dependence' },
   },
   itemtype: {
     visible: false,
     type: 'text',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Rodzaj gry', en: 'Item type' },
   },
   objectid: {
@@ -173,12 +201,15 @@ export const tableConfig: TableConfig = {
     visible: false,
     type: 'number',
     filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Rok', en: 'Year' },
   },
   numplays: {
     visible: false,
     type: 'number',
     filter: 'agNumberColumnFilter',
+    enableValue: true,
+    aggFunc: 'sum',
     label: { pl: 'Liczba partii', en: 'Number of plays' },
   },
   own: {
@@ -344,6 +375,8 @@ export const tableConfig: TableConfig = {
   version_yearpublished: {
     visible: false,
     type: 'number',
+    filter: 'agSetColumnFilter',
+    enableRowGroup: true,
     label: { pl: 'Rok wydania wersji', en: 'Version year published' },
   },
   version_nickname: {
@@ -373,6 +406,18 @@ export function getColumnFilter(key: string): ColumnFilterType {
 
 export function getColumnFilterParams(key: string): Record<string, any> | undefined {
   return tableConfig[key]?.filterParams;
+}
+
+export function isColumnRowGroupEnabled(key: string): boolean {
+  return !!tableConfig[key]?.enableRowGroup;
+}
+
+export function isColumnValueEnabled(key: string): boolean {
+  return !!tableConfig[key]?.enableValue;
+}
+
+export function getColumnAggFunc(key: string): string | undefined {
+  return tableConfig[key]?.aggFunc;
 }
 
 export function formatNumberPrecision(value: any, decimals = 2): string {
