@@ -28,8 +28,10 @@ import {
   ValueFormatterParams,
 } from 'ag-grid-community';
 import { AgGridAngular } from 'ag-grid-angular';
+import { AllEnterpriseModule, LicenseManager } from 'ag-grid-enterprise';
 
 import { formatNumberPrecision, getColumnDataType, getColumnLabel, gridOptions, tableConfig } from './tableConfig';
+import { LicenseKey } from './license';
 import { ColumnMenuRequest, ColumnMenuService } from './column-menu.service';
 import { InnerHeaderComponent } from './inner-header.component';
 import { environment } from '../environments/environment';
@@ -49,7 +51,8 @@ import { InfoSectionComponent } from './info-section.component';
 import { GameCardListComponent } from './game-card-list.component';
 import { SelectedGamePreviewComponent } from './selected-game-preview.component';
 
-ModuleRegistry.registerModules([AllCommunityModule]);
+LicenseManager.setLicenseKey(LicenseKey);
+ModuleRegistry.registerModules([AllCommunityModule, AllEnterpriseModule]);
 provideGlobalGridOptions({ theme: 'legacy' });
 
 @Component({

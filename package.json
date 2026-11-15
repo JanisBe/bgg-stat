@@ -21,6 +21,7 @@
     "@types/papaparse": "^5.5.2",
     "ag-grid-angular": "^36.2.0",
     "ag-grid-community": "^36.2.0",
+    "ag-grid-enterprise": "^36.2.0",
     "fast-xml-parser": "^5.12.1",
     "highcharts": "^13.1.1",
     "highcharts-angular": "^5.4.1",
