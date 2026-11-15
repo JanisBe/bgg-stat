@@ -84,6 +84,12 @@ export interface TranslationKeys {
   pollNotRecommended: string;
   votes: string;
   communitySuggested: string;
+
+  // Zooming hints & actions
+  zoomHintDesktop: string;
+  zoomHintMobile: string;
+  resetZoom: string;
+  resetZoomTitle: string;
 }
 
 export const translationsPl: TranslationKeys = {
@@ -138,6 +144,10 @@ export const translationsPl: TranslationKeys = {
   minutes: "min",
   showMore: "Pokaż więcej",
   tapToHighlight: "Dotknij punktu na wykresie, aby zobaczyć szczegóły gry.",
+  zoomHintDesktop: "Zaznacz prostokąt lub użyj kółka myszy, aby przybliżyć. Przytrzymaj Shift i przeciągnij, aby przesuwać.",
+  zoomHintMobile: "Zsuń/rozsuń palce (pinch), aby przybliżyć. Przeciągnij, aby przesuwać po powiększeniu.",
+  resetZoom: "Resetuj powiększenie",
+  resetZoomTitle: "Przywróć powiększenie 1:1",
 
   bggApiSettings: "Ustawienia BGG API",
   bggApiToken: "Token BGG API",
@@ -222,6 +232,10 @@ export const translationsEn: TranslationKeys = {
   minutes: "min",
   showMore: "Show more",
   tapToHighlight: "Tap a point on the chart to view game details.",
+  zoomHintDesktop: "Drag to select an area or use mouse wheel to zoom. Hold Shift and drag to pan.",
+  zoomHintMobile: "Pinch with two fingers to zoom. Drag to pan when zoomed.",
+  resetZoom: "Reset zoom",
+  resetZoomTitle: "Reset zoom level 1:1",
 
   bggApiSettings: "BGG API Settings",
   bggApiToken: "BGG API Token",

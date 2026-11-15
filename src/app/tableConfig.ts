@@ -437,6 +437,8 @@ export const gridOptions: GridOptions = {
   tooltipShowDelay: 300,
   defaultColDef: {
     sortable: true,
+    wrapHeaderText: true,
+    autoHeaderHeight: true,
     suppressHeaderFilterButton: true,
     suppressHeaderContextMenu: true,
     tooltipValueGetter: (params: ITooltipParams) => {
@@ -446,7 +448,7 @@ export const gridOptions: GridOptions = {
   },
   autoSizeStrategy: {
     type: 'fitGridWidth',
-    defaultMinWidth: 80,
+    defaultMinWidth: 90,
     columnLimits: [
       {
         colId: 'objectname',

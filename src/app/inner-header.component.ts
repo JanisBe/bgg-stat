@@ -25,9 +25,11 @@ import {ColumnMenuService} from './column-menu.service';
     .inner-header {
       display: flex;
       align-items: center;
-      gap: var(--space-2xs);
+      gap: 2px;
       width: 100%;
       min-width: 0;
+      height: 100%;
+      box-sizing: border-box;
     }
 
     .ag-header-cell-text {
@@ -38,6 +40,13 @@ import {ColumnMenuService} from './column-menu.service';
       font-family: var(--font-display);
       font-weight: 600;
       letter-spacing: var(--tracking-display);
+      white-space: normal;
+      overflow-wrap: normal;
+      word-break: normal;
+      line-height: 1.2;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     .column-menu-btn {
@@ -45,15 +54,19 @@ import {ColumnMenuService} from './column-menu.service';
       border: var(--rule-hair) solid transparent;
       background: transparent;
       cursor: pointer;
-      padding: var(--space-3xs) var(--space-2xs);
+      padding: 2px;
       border-radius: var(--radius-pill);
       color: var(--color-muted);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       line-height: 1;
+      opacity: 0.6;
+      transition: opacity var(--dur-micro, 120ms) ease;
 
-      &:hover {
+      &:hover,
+      &:focus-visible {
+        opacity: 1;
         color: var(--color-ink);
         background: var(--color-paper-3);
       }
@@ -61,6 +74,10 @@ import {ColumnMenuService} from './column-menu.service';
       &:focus-visible {
         outline: 2px solid var(--color-focus);
       }
+    }
+
+    .inner-header:hover .column-menu-btn {
+      opacity: 1;
     }
   `],
   changeDetection: ChangeDetectionStrategy.Eager,

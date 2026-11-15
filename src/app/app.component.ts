@@ -626,36 +626,43 @@ export class AppComponent {
 
   gridOptions = {
     ...gridOptions,
+    autoSizeStrategy:
+      typeof window !== 'undefined' && window.innerWidth >= 1100
+        ? gridOptions.autoSizeStrategy
+        : undefined,
     localeText: this.i18n.currentLang() === 'pl' ? AG_GRID_LOCALE_PL : undefined,
     rowGroupPanelShow: 'never' as const,
     groupDefaultExpanded: 1,
-    sideBar: {
-      toolPanels: [
-        {
-          id: 'columns',
-          labelDefault: 'Kolumny',
-          labelKey: 'columns',
-          iconKey: 'columns',
-          toolPanel: 'agColumnsToolPanel',
-          toolPanelParams: {
-            suppressRowGroups: true,
-            suppressValues: true,
-            suppressPivots: true,
-            suppressPivotMode: true,
-            suppressColumnFilter: false,
-            suppressColumnSelectAll: false,
-            suppressColumnExpandAll: true,
-          },
-        },
-        {
-          id: 'filters',
-          labelDefault: 'Filtry',
-          labelKey: 'filters',
-          iconKey: 'filter',
-          toolPanel: 'agFiltersToolPanel',
-        },
-      ],
-    },
+    sideBar:
+      typeof window !== 'undefined' && window.innerWidth >= 1024
+        ? {
+            toolPanels: [
+              {
+                id: 'columns',
+                labelDefault: 'Kolumny',
+                labelKey: 'columns',
+                iconKey: 'columns',
+                toolPanel: 'agColumnsToolPanel',
+                toolPanelParams: {
+                  suppressRowGroups: true,
+                  suppressValues: true,
+                  suppressPivots: true,
+                  suppressPivotMode: true,
+                  suppressColumnFilter: false,
+                  suppressColumnSelectAll: false,
+                  suppressColumnExpandAll: true,
+                },
+              },
+              {
+                id: 'filters',
+                labelDefault: 'Filtry',
+                labelKey: 'filters',
+                iconKey: 'filter',
+                toolPanel: 'agFiltersToolPanel',
+              },
+            ],
+          }
+        : false,
     getContextMenuItems: (params: GetContextMenuItemsParams): (DefaultMenuItem | MenuItemDef)[] => {
       const isPl = this.i18n.currentLang() === 'pl';
       const game = params.node?.data;
@@ -854,7 +861,9 @@ export class AppComponent {
     }
     if (tab === 'table' || tab === 'all') {
       setTimeout(() => {
-        this.gridApi?.sizeColumnsToFit();
+        if (typeof window !== 'undefined' && window.innerWidth >= 1100) {
+          this.gridApi?.sizeColumnsToFit();
+        }
       }, 50);
     }
   }
@@ -1163,6 +1172,13 @@ export class AppComponent {
   @HostListener('window:resize')
   onResize(): void {
     this.checkScreenSize();
+    if (this.dataLoaded() && this.rowData().length > 0) {
+      this.columnDefs.set(this.generateColumns(this.rowData()[0] ?? {}));
+      this.gridApi?.setGridOption('columnDefs', this.columnDefs());
+      if (typeof window !== 'undefined' && window.innerWidth >= 1100) {
+        this.gridApi?.sizeColumnsToFit();
+      }
+    }
   }
 
   onToggleFilters(): void {
@@ -1182,6 +1198,9 @@ export class AppComponent {
     this.gridApi = params.api;
     this.checkScreenSize();
     this.applyPendingGridState();
+    if (typeof window !== 'undefined' && window.innerWidth >= 1100) {
+      this.gridApi.sizeColumnsToFit();
+    }
     if (this.selectedGame()?.objectid) {
       this.gridApi.forEachNode((node) => {
         if (node.data?.objectid === this.selectedGame()?.objectid) {
@@ -1337,7 +1356,10 @@ export class AppComponent {
   }
 
   private generateColumns(collection: any[]): ColDef[] {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const width = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const isMobile = width < 768;
+    const isSmallDesktop = width < 1100;
+    const shouldPinName = width >= 1024;
     const visibleCols = this.visibleColumns();
 
     const columnNames = Object.keys(collection || {}).map((key) => {
@@ -1359,6 +1381,10 @@ export class AppComponent {
         enableValue,
         aggFunc,
         sortable: true,
+        wrapHeaderText: true,
+        autoHeaderHeight: true,
+        minWidth: key === 'objectname' ? (isMobile ? 180 : 200) : (isSmallDesktop ? 100 : 80),
+        width: isSmallDesktop ? (key === 'objectname' ? 200 : 110) : undefined,
         hide: !visibleCols.has(key),
         floatingFilter: true,
         cellDataType: type,
@@ -1374,8 +1400,8 @@ export class AppComponent {
 
     columnNames.forEach((col) => {
       if (col.field === 'objectname') {
-        col.pinned = isMobile ? null : 'left';
-        col.lockPinned = !isMobile;
+        col.pinned = shouldPinName ? 'left' : null;
+        col.lockPinned = shouldPinName;
         col.lockVisible = true;
       }
     });
@@ -1384,13 +1410,20 @@ export class AppComponent {
   }
 
   private checkScreenSize(): void {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const width = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const isMobile = width < 768;
+    const shouldPinName = width >= 1024;
+    const shouldFitGrid = width >= 1100;
+
     this.isMobile.set(isMobile);
     if (isMobile && this.activeTab() === 'all') {
       this.activeTab.set('chart');
     }
     if (!this.gridApi) return;
-    this.gridApi.setColumnsPinned(['objectname'], isMobile ? null : 'left');
+    this.gridApi.setColumnsPinned(['objectname'], shouldPinName ? 'left' : null);
+    if (shouldFitGrid) {
+      this.gridApi.sizeColumnsToFit();
+    }
   }
 
   private buildInitialCheckboxOptions(): CheckboxOption[] {

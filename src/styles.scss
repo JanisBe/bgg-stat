@@ -68,6 +68,15 @@ app-root {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: var(--tracking-display);
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.ag-header-cell-label {
+  width: 100%;
 }
 
 .ag-cell.num-cell {
