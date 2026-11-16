@@ -117,17 +117,28 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      // Register reactivity dependencies
+      // Re-render chart when data, theme or language configuration changes
       this.i18n.currentLang();
       this.isDarkMode();
       this.isMobile();
-      this.selectedObjectId();
       this.gamesData();
       this.expansionsData();
       this.visibleColumns();
 
       if (this.isViewReady) {
         this.renderOrUpdateChart();
+      }
+    });
+
+    effect(() => {
+      // Update only point selection without re-rendering or recreating the chart
+      const selId = this.selectedObjectId();
+      if (this.chart) {
+        if (selId !== null && selId !== undefined) {
+          this.selectPointByObjectId(selId);
+        } else {
+          this.clearSelection();
+        }
       }
     });
   }
@@ -144,11 +155,12 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  selectPointByObjectId(objectId: string | number | undefined): void {
-    if (!this.chart || objectId === undefined) return;
+  selectPointByObjectId(objectId: string | number | undefined | null): void {
+    if (!this.chart || objectId === undefined || objectId === null) return;
+    const targetIdStr = String(objectId);
     this.chart.getSelectedPoints().forEach(p => p.select(false));
     this.chart.series.forEach(series => {
-      const point = series.data.find(p => (p.options as any).objectid === objectId);
+      const point = series.data.find(p => String((p.options as any).objectid) === targetIdStr);
       if (point) {
         point.select(true, false);
       }
@@ -165,9 +177,14 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
     if (!this.containerRef?.nativeElement) return;
 
     const options = this.buildChartOptions();
-    this.chart = Highcharts.chart(this.containerRef.nativeElement, options);
+    if (this.chart) {
+      this.chart.update(options, true, true);
+    } else {
+      this.chart = Highcharts.chart(this.containerRef.nativeElement, options);
+    }
+
     const selId = this.selectedObjectId();
-    if (selId) {
+    if (selId !== null && selId !== undefined) {
       this.selectPointByObjectId(selId);
     }
   }

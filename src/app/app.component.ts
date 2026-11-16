@@ -149,10 +149,10 @@ export class AppComponent {
     if (file) {
       this.fileDate.set(formatDate(new Date(file.lastModified)));
     }
-    await this.pareseCSV(file);
+    await this.parseCsv(file);
   }
 
-  async pareseCSV(file: any): Promise<void> {
+  async parseCsv(file: File | string): Promise<void> {
     if (file && (await this.collectionDataService.validateCsv(file))) {
       try {
         const data = await this.collectionDataService.parseCsv(file);

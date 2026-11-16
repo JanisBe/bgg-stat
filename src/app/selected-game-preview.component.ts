@@ -1,12 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   effect,
   inject,
   input,
   output,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { I18nService } from './i18n';
 import { DataPoint } from './models';
 import { BggAuthService } from './bgg-auth.service';
@@ -791,12 +794,17 @@ export class SelectedGamePreviewComponent {
   readonly isLoadingBgg = signal<boolean>(false);
   readonly bggError = signal<string | null>(null);
 
+  private readonly destroyRef = inject(DestroyRef);
+  private activeRequestSub?: Subscription;
+
   constructor() {
     effect(() => {
       const g = this.game();
       const hasToken = this.authService.hasToken();
 
       if (!g?.objectid || !hasToken) {
+        this.activeRequestSub?.unsubscribe();
+        this.activeRequestSub = undefined;
         this.bggDetails.set(null);
         this.isLoadingBgg.set(false);
         this.bggError.set(null);
@@ -808,19 +816,23 @@ export class SelectedGamePreviewComponent {
   }
 
   fetchBggDetails(objectId: number | string): void {
+    this.activeRequestSub?.unsubscribe();
     this.isLoadingBgg.set(true);
     this.bggError.set(null);
 
-    this.bggApiService.getThingDetails(objectId).subscribe({
-      next: (details) => {
-        this.bggDetails.set(details);
-        this.isLoadingBgg.set(false);
-      },
-      error: () => {
-        this.bggError.set(this.t.fetchBggError);
-        this.isLoadingBgg.set(false);
-      },
-    });
+    this.activeRequestSub = this.bggApiService
+      .getThingDetails(objectId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (details) => {
+          this.bggDetails.set(details);
+          this.isLoadingBgg.set(false);
+        },
+        error: () => {
+          this.bggError.set(this.t.fetchBggError);
+          this.isLoadingBgg.set(false);
+        },
+      });
   }
 
   formatDecimal(val: any): string {

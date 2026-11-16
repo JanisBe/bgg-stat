@@ -113,16 +113,18 @@
       <!-- Chart section -->
       @if (dataLoaded() && (activeTab() === 'all' || activeTab() === 'chart')) {
         <div class="content-section chart-section">
-          <app-chart
-            #chartComp
-            [gamesData]="gamesPoints()"
-            [expansionsData]="expansionPoints()"
-            [visibleColumns]="visibleColumns()"
-            [isDarkMode]="isDarkMode()"
-            [isMobile]="isMobile()"
-            [selectedObjectId]="selectedGame()?.objectid"
-            (pointSelected)="onChartPointSelected($event)"
-          />
+          @defer (when dataLoaded()) {
+            <app-chart
+              #chartComp
+              [gamesData]="gamesPoints()"
+              [expansionsData]="expansionPoints()"
+              [visibleColumns]="visibleColumns()"
+              [isDarkMode]="isDarkMode()"
+              [isMobile]="isMobile()"
+              [selectedObjectId]="selectedGame()?.objectid"
+              (pointSelected)="onChartPointSelected($event)"
+            />
+          }
 
           @if (selectedGame()) {
             <app-selected-game-preview
@@ -138,35 +140,39 @@
       <!-- Cards view -->
       @if (dataLoaded() && activeTab() === 'cards') {
         <div class="content-section cards-section">
-          <app-game-card-list
-            [games]="allActiveGames()"
-            [isDarkMode]="isDarkMode()"
-            [selectedObjectId]="selectedGame()?.objectid"
-            (gameSelected)="onCardGameSelected($event)"
-            (openBgg)="openBggPage($event)"
-          />
+          @defer (when activeTab() === 'cards') {
+            <app-game-card-list
+              [games]="allActiveGames()"
+              [isDarkMode]="isDarkMode()"
+              [selectedObjectId]="selectedGame()?.objectid"
+              (gameSelected)="onCardGameSelected($event)"
+              (openBgg)="openBggPage($event)"
+            />
+          }
         </div>
       }
 
       <!-- Table view -->
       @if (dataLoaded() && (activeTab() === 'all' || activeTab() === 'table')) {
         <div class="content-section table-section">
-          <app-game-table
-            #gameTable
-            [rowData]="rowData()"
-            [columnDefs]="columnDefs()"
-            [isDarkMode]="isDarkMode()"
-            [currentLang]="currentLang()"
-            [showStandalone]="showStandalone()"
-            [showExpansions]="showExpansions()"
-            [selectedObjectId]="selectedGame()?.objectid"
-            (rowSelect)="onTableRowSelected($event)"
-            (gameOpenBgg)="openBggPage($event)"
-            (filteredDataChange)="onTableFilterChanged($event)"
-            (gridStateChange)="onGridStateChanged()"
-            (columnVisible)="onColumnVisible($event)"
-            (columnMenuOpen)="openColumnMenu($event)"
-          />
+          @defer (when dataLoaded()) {
+            <app-game-table
+              #gameTable
+              [rowData]="rowData()"
+              [columnDefs]="columnDefs()"
+              [isDarkMode]="isDarkMode()"
+              [currentLang]="currentLang()"
+              [showStandalone]="showStandalone()"
+              [showExpansions]="showExpansions()"
+              [selectedObjectId]="selectedGame()?.objectid"
+              (rowSelect)="onTableRowSelected($event)"
+              (gameOpenBgg)="openBggPage($event)"
+              (filteredDataChange)="onTableFilterChanged($event)"
+              (gridStateChange)="onGridStateChanged()"
+              (columnVisible)="onColumnVisible($event)"
+              (columnMenuOpen)="openColumnMenu($event)"
+            />
+          }
         </div>
       }
 

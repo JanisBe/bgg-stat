@@ -80,7 +80,7 @@ import { ColumnMenuService } from './column-menu.service';
       opacity: 1;
     }
   `],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
 })
 export class InnerHeaderComponent {
