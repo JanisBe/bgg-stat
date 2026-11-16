@@ -82,8 +82,12 @@ export class AppComponent {
 
   readonly rowData = signal<any[]>([]);
   readonly columnDefs = signal<ColDef[]>([]);
-  readonly checkboxOptions = this.columnConfigService.checkboxOptions;
-  readonly visibleColumns = this.columnConfigService.visibleColumns;
+  readonly tableColumnOptions = this.columnConfigService.tableColumnOptions;
+  readonly tooltipOptions = this.columnConfigService.tooltipOptions;
+  readonly visibleTableColumns = this.columnConfigService.visibleTableColumns;
+  readonly visibleTooltipColumns = this.columnConfigService.visibleTooltipColumns;
+  readonly checkboxOptions = this.columnConfigService.tooltipOptions;
+  readonly visibleColumns = this.columnConfigService.visibleTooltipColumns;
 
   readonly gamesPoints = signal<DataPoint[]>([]);
   readonly expansionPoints = signal<DataPoint[]>([]);
@@ -278,7 +282,12 @@ export class AppComponent {
     }
 
     if (prefs.columnVisibility) {
-      this.columnConfigService.applyStoredVisibility(prefs.columnVisibility);
+      this.columnConfigService.applyStoredTableVisibility(prefs.columnVisibility);
+    }
+    if (prefs.tooltipVisibility) {
+      this.columnConfigService.applyStoredTooltipVisibility(prefs.tooltipVisibility);
+    } else if (prefs.columnVisibility) {
+      this.columnConfigService.applyStoredTooltipVisibility(prefs.columnVisibility);
     }
 
     this.pendingFilterModel = prefs.filterModel;
@@ -296,7 +305,10 @@ export class AppComponent {
 
     return {
       columnVisibility: Object.fromEntries(
-        this.checkboxOptions().map((option) => [option.key, option.visible])
+        this.tableColumnOptions().map((option) => [option.key, option.visible])
+      ),
+      tooltipVisibility: Object.fromEntries(
+        this.tooltipOptions().map((option) => [option.key, option.visible])
       ),
       showStandalone: this.showStandalone(),
       showExpansions: this.showExpansions(),
@@ -341,11 +353,14 @@ export class AppComponent {
     this.scheduleSavePreferences();
   }
 
-  onOptionToggled(entry: { key: string; visible: boolean }): void {
-    if (this.columnConfigService.syncColumnVisibility(entry.key, entry.visible)) {
-      this.gameTable?.setColumnsVisible([entry.key], entry.visible);
-      this.onColumnVisibilityChanged();
+  onTooltipOptionToggled(entry: { key: string; visible: boolean }): void {
+    if (this.columnConfigService.syncTooltipVisibility(entry.key, entry.visible)) {
+      this.scheduleSavePreferences();
     }
+  }
+
+  onOptionToggled(entry: { key: string; visible: boolean }): void {
+    this.onTooltipOptionToggled(entry);
   }
 
   openColumnMenu(request: ColumnMenuRequest): void {
@@ -382,20 +397,20 @@ export class AppComponent {
       return;
     }
 
-    const exists = this.checkboxOptions().some((o) => o.key === colId);
+    const exists = this.tableColumnOptions().some((o) => o.key === colId);
     if (exists) {
-      this.columnConfigService.syncColumnVisibility(colId, false);
+      this.columnConfigService.syncTableColumnVisibility(colId, false);
       this.gameTable?.setColumnsVisible([colId], false);
-      this.onColumnVisibilityChanged();
+      this.scheduleSavePreferences();
     }
 
     this.closeColumnMenu();
   }
 
   toggleColumnFromMenu(event: { option: CheckboxOption; checked: boolean }): void {
-    if (this.columnConfigService.syncColumnVisibility(event.option.key, event.checked)) {
+    if (this.columnConfigService.syncTableColumnVisibility(event.option.key, event.checked)) {
       this.gameTable?.setColumnsVisible([event.option.key], event.checked);
-      this.onColumnVisibilityChanged();
+      this.scheduleSavePreferences();
     }
   }
 
@@ -404,13 +419,13 @@ export class AppComponent {
     let changed = false;
 
     for (const column of columns) {
-      if (this.columnConfigService.syncColumnVisibility(column.getColId(), column.isVisible())) {
+      if (this.columnConfigService.syncTableColumnVisibility(column.getColId(), column.isVisible())) {
         changed = true;
       }
     }
 
     if (changed) {
-      this.onColumnVisibilityChanged();
+      this.scheduleSavePreferences();
     }
   }
 

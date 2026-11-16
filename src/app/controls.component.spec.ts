@@ -102,4 +102,33 @@ describe('ControlsComponent', () => {
     expect(component.showStandalone()).toBeFalse();
     expect(component.showExpansions()).toBeTrue();
   });
+
+  it('should render tooltip options section header and emit tooltipOptionToggled', () => {
+    const fixture = TestBed.createComponent(ControlsComponent);
+    const component = fixture.componentInstance;
+    fixture.componentRef.setInput('dataLoaded', true);
+    fixture.componentRef.setInput('tooltipOptions', [
+      { key: 'rank', visible: true, translation: 'Rank' },
+      { key: 'rating', visible: false, translation: 'Rating' },
+    ]);
+    component.isExpanded.set(true);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const header = compiled.querySelector('.options-section-header');
+    expect(header).toBeTruthy();
+    expect(header?.textContent).toContain(component.t.tooltipOptionsTitle);
+
+    let emitted: { key: string; visible: boolean } | undefined;
+    component.tooltipOptionToggled.subscribe((event) => {
+      emitted = event;
+    });
+
+    const rankInput = compiled.querySelector('#tooltip-rank') as HTMLInputElement;
+    expect(rankInput).toBeTruthy();
+    rankInput.checked = false;
+    rankInput.dispatchEvent(new Event('change'));
+
+    expect(emitted).toEqual({ key: 'rank', visible: false });
+  });
 });

@@ -90,7 +90,7 @@ Responsibilities:
 - **Cross-view interaction** – clicking a table row selects and highlights the corresponding chart point.
 - **Filter synchronization** – AG-Grid filter changes recalculate chart data so only visible rows appear on the chart.
 - **Expansion toggle** – a checkbox lets the user include/exclude expansions from the chart.
-- **Column visibility** – a panel of checkboxes mirrors `tableConfig` visibility flags and drives both the tooltip content and table column visibility simultaneously.
+- **Tooltip content vs. Table columns separation** – the "Options" dropdown in the control bar exclusively controls which attributes appear in the Highcharts chart tooltip. In contrast, table column visibility is managed exclusively inside AG-Grid (via the column header context/inner-header menu and the side tool panel).
 - **Locale-aware labels** – column headers and tooltips are shown in Polish when the browser language is `pl-*`, English otherwise.
 
 ### `tableConfig.ts`

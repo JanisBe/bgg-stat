@@ -86,6 +86,45 @@ import { I18nService } from './i18n';
       font-size: var(--text-md);
       line-height: 1.65;
       color: var(--color-ink-2);
+
+      .help-section {
+        margin-bottom: var(--space-md);
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      h3 {
+        font-family: var(--font-display);
+        font-size: var(--text-base);
+        font-weight: 600;
+        letter-spacing: var(--tracking-display);
+        color: var(--color-ink);
+        margin: 0 0 var(--space-2xs) 0;
+      }
+
+      p {
+        margin: 0 0 var(--space-xs) 0;
+      }
+
+      ul {
+        margin: var(--space-2xs) 0 var(--space-xs) var(--space-md);
+        padding: 0;
+      }
+
+      li {
+        margin-bottom: var(--space-2xs);
+      }
+
+      strong {
+        color: var(--color-ink);
+        font-weight: 600;
+      }
+
+      em {
+        font-style: italic;
+      }
     }
   `]
 })

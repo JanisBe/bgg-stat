@@ -15,7 +15,7 @@ import { Chart } from 'highcharts';
 import mouseWheelZoom from 'highcharts/modules/mouse-wheel-zoom';
 import { I18nService } from './i18n';
 import { formatNumberPrecision, getColumnLabel, tableConfig } from './tableConfig';
-import { DataPoint, StringKeyValueMap } from './models';
+import { DataPoint } from './models';
 
 // Initialize mouse-wheel-zoom module for Highcharts
 try {
@@ -23,8 +23,6 @@ try {
 } catch {
   // Ignore if already initialized or unsupported
 }
-
-const NOT_DISPLAYED = new Set(['x', 'y', 'objectname', 'url', 'name', 'Nazwa', 'Name', 'rating', 'weight', 'objectid']);
 
 @Component({
   selector: 'app-chart',
@@ -338,8 +336,12 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
         },
         formatter: function () {
           const point = this as Highcharts.Point;
-          let tooltip = `<div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:${isMobileDevice ? '13px' : '14px'};margin-bottom:4px;border-bottom:1px solid ${gridLineColor};padding-bottom:3px;">${point.name}</div>`;
           const options = point.options as any;
+          const raw = options.raw || options;
+          const visibleCols = self.visibleColumns();
+          const currentLang = self.i18n.currentLang();
+
+          let tooltip = `<div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:${isMobileDevice ? '13px' : '14px'};margin-bottom:4px;border-bottom:1px solid ${gridLineColor};padding-bottom:3px;">${point.name}</div>`;
 
           if (isMobileDevice) {
             // Compact tooltip on mobile so it doesn't take up the entire screen
@@ -347,17 +349,35 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
             const weightVal = formatNumberPrecision(point.x, 2);
             tooltip += `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;"><span style="color:${mutedColor}">${self.t.rating}:</span> <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;">${ratingVal}</span></div>`;
             tooltip += `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;"><span style="color:${mutedColor}">${self.t.weight}:</span> <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;">${weightVal}/5</span></div>`;
-            if (options.rank && options.rank !== '0' && options.rank !== 0) {
-              tooltip += `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;"><span style="color:${mutedColor}">Rank:</span> <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;">#${options.rank}</span></div>`;
+            const rankVal = raw.rank ?? options.rank;
+            if (rankVal && rankVal !== '0' && rankVal !== 0) {
+              tooltip += `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;"><span style="color:${mutedColor}">Rank:</span> <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;">#${rankVal}</span></div>`;
             }
             tooltip += `<div style="font-size:10px;color:${mutedColor};margin-top:4px;border-top:1px dotted ${gridLineColor};padding-top:2px;">${self.t.tapToHighlight}</div>`;
           } else {
-            // Full tooltip on desktop showing all active columns
-            for (const tooltipName of Object.keys(options)) {
-              if (options[tooltipName] && !NOT_DISPLAYED.has(tooltipName)) {
-                const val = formatNumberPrecision(options[tooltipName], 2);
-                tooltip += `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;"><span style="color:${mutedColor}">${tooltipName}:</span> <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;">${val}</span></div>`;
+            // Full tooltip on desktop showing all active columns selected in visibleColumns
+            for (const key of Object.keys(tableConfig)) {
+              if (key === 'objectname') {
+                continue;
               }
+              if (!visibleCols.has(key)) {
+                continue;
+              }
+
+              const rawVal = raw[key];
+              if (rawVal == null || rawVal === '') {
+                continue;
+              }
+
+              const label = getColumnLabel(key, currentLang) || key.charAt(0).toUpperCase() + key.slice(1);
+              let formattedVal: string;
+              if (tableConfig[key]?.type === 'boolean') {
+                formattedVal = rawVal ? (currentLang === 'pl' ? 'Tak' : 'Yes') : (currentLang === 'pl' ? 'Nie' : 'No');
+              } else {
+                formattedVal = formatNumberPrecision(rawVal, 2);
+              }
+
+              tooltip += `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;"><span style="color:${mutedColor}">${label}:</span> <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;">${formattedVal}</span></div>`;
             }
           }
           return tooltip;
@@ -404,7 +424,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
             events: {
               click: function () {
                 const options = this.options as any;
-                self.pointSelected.emit(options);
+                self.pointSelected.emit(options.raw || options);
               },
             },
           },
@@ -414,26 +434,15 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
   }
 
   private processPoints(dataPoints: DataPoint[]): any[] {
-    const visibleCols = this.visibleColumns();
-
-    return dataPoints.map((point) => {
-      const additionalProps: StringKeyValueMap = {};
-      Object.keys(tableConfig).forEach(key => {
-        if (key !== 'objectname' && visibleCols.has(key) && !(key in additionalProps)) {
-          const translatedKey = this.getTranslation(key) || key.charAt(0).toUpperCase() + key.slice(1);
-          additionalProps[translatedKey] = point[key];
-        }
-      });
-
-      return {
-        name: point.objectname,
-        x: point.x,
-        y: point.y,
-        url: this.link + point.objectid,
-        objectid: point.objectid,
-        ...additionalProps
-      };
-    });
+    return dataPoints.map((point) => ({
+      ...point,
+      name: point.objectname,
+      x: point.x,
+      y: point.y,
+      url: this.link + point.objectid,
+      objectid: point.objectid,
+      raw: point,
+    }));
   }
 
   private getTranslation(key: string): string {

@@ -146,4 +146,36 @@ describe('AppComponent', () => {
     expect(fileDate).toBeTruthy();
     expect(fileDate?.textContent).toContain('2026-11-14');
   });
+
+  it('should decouple tooltip option toggles from table columns', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(app.visibleTooltipColumns().has('rank')).toBeTrue();
+    expect(app.visibleTableColumns().has('rank')).toBeTrue();
+
+    // Toggle tooltip option off
+    app.onTooltipOptionToggled({ key: 'rank', visible: false });
+
+    // Tooltip should be false, but table column must remain true
+    expect(app.visibleTooltipColumns().has('rank')).toBeFalse();
+    expect(app.visibleTableColumns().has('rank')).toBeTrue();
+  });
+
+  it('should decouple table column hide from tooltip options', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(app.visibleTooltipColumns().has('rank')).toBeTrue();
+    expect(app.visibleTableColumns().has('rank')).toBeTrue();
+
+    // Hide column from AG-Grid column menu
+    app.hideColumnFromMenu('rank');
+
+    // Table column should be false, but tooltip options must remain true
+    expect(app.visibleTableColumns().has('rank')).toBeFalse();
+    expect(app.visibleTooltipColumns().has('rank')).toBeTrue();
+  });
 });

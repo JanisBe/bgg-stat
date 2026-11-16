@@ -14,14 +14,14 @@
     <app-controls
       [dataLoaded]="dataLoaded()"
       [hasSavedPreferences]="hasSavedPreferences()"
-      [checkboxOptions]="checkboxOptions()"
+      [tooltipOptions]="tooltipOptions()"
       [isDarkMode]="isDarkMode()"
       [(showStandalone)]="showStandalone"
       [(showExpansions)]="showExpansions"
       (fileSelected)="onFileUpload($event)"
       (loadExample)="onLoadMyExample()"
       (filterToggled)="onToggleFilters()"
-      (optionToggled)="onOptionToggled($event)"
+      (tooltipOptionToggled)="onTooltipOptionToggled($event)"
       (resetPreferences)="resetPreferences()"
     />
 
@@ -118,7 +118,7 @@
               #chartComp
               [gamesData]="gamesPoints()"
               [expansionsData]="expansionPoints()"
-              [visibleColumns]="visibleColumns()"
+              [visibleColumns]="visibleTooltipColumns()"
               [isDarkMode]="isDarkMode()"
               [isMobile]="isMobile()"
               [selectedObjectId]="selectedGame()?.objectid"
@@ -190,7 +190,7 @@
     [x]="columnMenuState().x"
     [y]="columnMenuState().y"
     [colId]="columnMenuState().colId"
-    [options]="checkboxOptions()"
+    [options]="tableColumnOptions()"
     [isDarkMode]="isDarkMode()"
     (close)="closeColumnMenu()"
     (hideColumn)="hideColumnFromMenu($event)"

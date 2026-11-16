@@ -4,6 +4,7 @@ const STORAGE_KEY = 'bgg-stat-ui-preferences';
 
 export interface UiPreferences {
   columnVisibility: Record<string, boolean>;
+  tooltipVisibility?: Record<string, boolean>;
   showStandalone: boolean;
   showExpansions: boolean;
   filterModel: Record<string, unknown> | null;

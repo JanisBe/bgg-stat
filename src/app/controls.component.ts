@@ -117,16 +117,21 @@ import { BggAuthService } from './bgg-auth.service';
             @if (dataLoaded()) {
               <div class="section-divider"></div>
 
+              <div class="options-section-header">
+                <span class="section-title">{{ t.tooltipOptionsTitle }}</span>
+                <span class="options-hint-text">{{ t.tooltipOptionsHint }}</span>
+              </div>
+
               @if (hasSavedPreferences()) {
                 <div class="option-item reset-item">
                   <button (click)="resetPreferences.emit()" type="button" class="btn-reset">{{ t.resetPreferences }}</button>
                 </div>
               }
-              @for (option of checkboxOptions(); track option.key) {
+              @for (option of tooltipOptions(); track option.key) {
                 <div class="option-item">
-                  <label [attr.for]="option.key">{{ option.translation || option.key }}</label>
+                  <label [attr.for]="'tooltip-' + option.key">{{ option.translation || option.key }}</label>
                   <input
-                    [id]="option.key"
+                    [id]="'tooltip-' + option.key"
                     (change)="onOptionChange(option, $event)"
                     [checked]="option.visible"
                     type="checkbox"
@@ -476,6 +481,27 @@ import { BggAuthService } from './bgg-auth.service';
       margin: var(--space-xs) 0;
     }
 
+    .options-section-header {
+      margin: var(--space-xs) 0 var(--space-2xs) 0;
+
+      .section-title {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: var(--text-sm);
+        letter-spacing: var(--tracking-display);
+        color: var(--color-ink);
+        display: block;
+      }
+
+      .options-hint-text {
+        display: block;
+        font-size: var(--text-xs);
+        color: var(--color-muted);
+        line-height: 1.35;
+        margin-top: var(--space-3xs);
+      }
+    }
+
     .btn-reset {
       width: 100%;
       cursor: pointer;
@@ -554,7 +580,7 @@ export class ControlsComponent {
 
   readonly dataLoaded = input<boolean>(false);
   readonly hasSavedPreferences = input<boolean>(false);
-  readonly checkboxOptions = input<CheckboxOption[]>([]);
+  readonly tooltipOptions = input<CheckboxOption[]>([]);
   readonly isDarkMode = input<boolean>(false);
 
   readonly showStandalone = model<boolean>(true);
@@ -563,6 +589,7 @@ export class ControlsComponent {
   readonly fileSelected = output<File>();
   readonly loadExample = output<void>();
   readonly filterToggled = output<void>();
+  readonly tooltipOptionToggled = output<{ key: string; visible: boolean }>();
   readonly optionToggled = output<{ key: string; visible: boolean }>();
   readonly resetPreferences = output<void>();
 
@@ -615,6 +642,7 @@ export class ControlsComponent {
 
   onOptionChange(option: CheckboxOption, event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
+    this.tooltipOptionToggled.emit({ key: option.key, visible: checked });
     this.optionToggled.emit({ key: option.key, visible: checked });
   }
 }

@@ -18,11 +18,19 @@ import { AppLanguage } from '../i18n';
   providedIn: 'root',
 })
 export class ColumnConfigService {
-  readonly checkboxOptions = signal<CheckboxOption[]>(this.buildInitialCheckboxOptions('pl'));
+  /** Table column options (configured in AG-Grid only) */
+  readonly tableColumnOptions = signal<CheckboxOption[]>(this.buildInitialTableOptions('pl'));
 
-  readonly visibleColumns = computed<Set<string>>(() => {
+  /** Tooltip fields options (configured in "Opcje" only, excludes objectname which is always the title header) */
+  readonly tooltipOptions = signal<CheckboxOption[]>(this.buildInitialTooltipOptions('pl'));
+
+  /** Backward-compatibility alias for tooltip options */
+  readonly checkboxOptions = this.tooltipOptions;
+
+  /** Set of visible table column keys */
+  readonly visibleTableColumns = computed<Set<string>>(() => {
     const set = new Set<string>();
-    for (const option of this.checkboxOptions()) {
+    for (const option of this.tableColumnOptions()) {
       if (option.visible) {
         set.add(option.key);
       }
@@ -30,7 +38,21 @@ export class ColumnConfigService {
     return set;
   });
 
-  buildInitialCheckboxOptions(lang: AppLanguage): CheckboxOption[] {
+  /** Set of visible tooltip field keys */
+  readonly visibleTooltipColumns = computed<Set<string>>(() => {
+    const set = new Set<string>();
+    for (const option of this.tooltipOptions()) {
+      if (option.visible) {
+        set.add(option.key);
+      }
+    }
+    return set;
+  });
+
+  /** Backward-compatibility alias for visible tooltip columns */
+  readonly visibleColumns = this.visibleTooltipColumns;
+
+  buildInitialTableOptions(lang: AppLanguage): CheckboxOption[] {
     return Object.keys(tableConfig).map((key) => ({
       key,
       visible: tableConfig[key].visible,
@@ -38,9 +60,28 @@ export class ColumnConfigService {
     }));
   }
 
-  applyStoredVisibility(columnVisibility?: Record<string, boolean>): void {
+  buildInitialTooltipOptions(lang: AppLanguage): CheckboxOption[] {
+    return Object.keys(tableConfig)
+      .filter((key) => key !== 'objectname')
+      .map((key) => ({
+        key,
+        visible: tableConfig[key].visible,
+        translation: getColumnLabel(key, lang) || key.charAt(0).toUpperCase() + key.slice(1),
+      }));
+  }
+
+  buildInitialOptions(lang: AppLanguage): CheckboxOption[] {
+    return this.buildInitialTableOptions(lang);
+  }
+
+  /** Backward-compatibility method alias */
+  buildInitialCheckboxOptions(lang: AppLanguage): CheckboxOption[] {
+    return this.buildInitialOptions(lang);
+  }
+
+  applyStoredTableVisibility(columnVisibility?: Record<string, boolean>): void {
     if (!columnVisibility) return;
-    this.checkboxOptions.update((options) =>
+    this.tableColumnOptions.update((options) =>
       options.map((option) => {
         if (option.key in columnVisibility) {
           return { ...option, visible: columnVisibility[option.key] };
@@ -50,30 +91,69 @@ export class ColumnConfigService {
     );
   }
 
-  syncColumnVisibility(colId: string, visible: boolean): boolean {
-    const options = this.checkboxOptions();
+  applyStoredTooltipVisibility(tooltipVisibility?: Record<string, boolean>): void {
+    if (!tooltipVisibility) return;
+    this.tooltipOptions.update((options) =>
+      options.map((option) => {
+        if (option.key in tooltipVisibility) {
+          return { ...option, visible: tooltipVisibility[option.key] };
+        }
+        return option;
+      })
+    );
+  }
+
+  /** Backward-compatibility method for restoring visibility */
+  applyStoredVisibility(columnVisibility?: Record<string, boolean>): void {
+    this.applyStoredTableVisibility(columnVisibility);
+    this.applyStoredTooltipVisibility(columnVisibility);
+  }
+
+  syncTableColumnVisibility(colId: string, visible: boolean): boolean {
+    const options = this.tableColumnOptions();
     const option = options.find((o) => o.key === colId);
     if (!option || option.visible === visible) {
       return false;
     }
 
-    this.checkboxOptions.set(
+    this.tableColumnOptions.set(
       options.map((o) => (o.key === colId ? { ...o, visible } : o))
     );
     return true;
   }
 
+  syncTooltipVisibility(colId: string, visible: boolean): boolean {
+    const options = this.tooltipOptions();
+    const option = options.find((o) => o.key === colId);
+    if (!option || option.visible === visible) {
+      return false;
+    }
+
+    this.tooltipOptions.set(
+      options.map((o) => (o.key === colId ? { ...o, visible } : o))
+    );
+    return true;
+  }
+
+  /** Backward-compatibility method */
+  syncColumnVisibility(colId: string, visible: boolean): boolean {
+    return this.syncTableColumnVisibility(colId, visible);
+  }
+
   updateLanguage(lang: AppLanguage): void {
-    this.checkboxOptions.update((options) =>
+    const updateOptions = (options: CheckboxOption[]) =>
       options.map((option) => ({
         ...option,
         translation: getColumnLabel(option.key, lang) || option.key.charAt(0).toUpperCase() + option.key.slice(1),
-      }))
-    );
+      }));
+
+    this.tableColumnOptions.update(updateOptions);
+    this.tooltipOptions.update(updateOptions);
   }
 
   resetToDefaults(lang: AppLanguage): void {
-    this.checkboxOptions.set(this.buildInitialCheckboxOptions(lang));
+    this.tableColumnOptions.set(this.buildInitialTableOptions(lang));
+    this.tooltipOptions.set(this.buildInitialTooltipOptions(lang));
   }
 
   generateColumnDefs(
@@ -84,7 +164,7 @@ export class ColumnConfigService {
     const isMobile = screenWidth < 768;
     const isSmallDesktop = screenWidth < 1100;
     const shouldPinName = screenWidth >= 1024;
-    const visibleCols = this.visibleColumns();
+    const visibleCols = this.visibleTableColumns();
 
     const columnNames = Object.keys(firstRow || {}).map((key) => {
       const type = getColumnDataType(key);

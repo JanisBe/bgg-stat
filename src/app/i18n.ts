@@ -11,6 +11,8 @@ export interface TranslationKeys {
   hideColumn: string;
   columnsMenu: string;
   loadCsvTooltip: string;
+  tooltipOptionsTitle: string;
+  tooltipOptionsHint: string;
   infoTitle: string;
   infoTextPart1: string;
   infoTextClickHere: string;
@@ -105,12 +107,73 @@ export const translationsPl: TranslationKeys = {
   hideColumn: "Ukryj kolumnę",
   columnsMenu: "Kolumny",
   loadCsvTooltip: "Najpierw załaduj plik CSV",
+  tooltipOptionsTitle: "Dymek na wykresie (tooltip)",
+  tooltipOptionsHint: "Wybierz dane widoczne w dymku po najechaniu na grę na wykresie.",
   infoTitle: "Info:",
   infoTextPart1: "Ściągnij swoją kolekcję z bgg jako csv, a następnie wczytaj ja tu. Można to zrobić stąd, klikając ",
   infoTextClickHere: "tutaj",
   infoTextPart2: " i wpisując nazwę użytkownika.",
   howToUseTitle: "Sposób obsługi:",
-  howToUseText: `Gdy wgrasz plik csv, wyświetli się wykres ciężar (weight) vs średnia ocena z BGG oraz tabelka z wczytanymi grami.<br>Tabelkę można sortować oraz filtrować.<br>Gdy klikniesz w wiersz zawierający jakąś grę, podświetli się ona na wykresie.<br>Kolumny można ukrywać i pokazywać przez ikonę ⋮ lub PPM na nagłówku kolumny, albo w opcjach (po prawej).<br>W filtrze można odhaczyć pokazywanie gier podstawowych i dodatków.`,
+  howToUseText: `<div class="help-section">
+  <h3>Wczytywanie kolekcji</h3>
+  <p>
+    Aplikacja umożliwia wizualizację i analizę kolekcji gier planszowych wyeksportowanej z serwisu BoardGameGeek (BGG).
+    Możesz wczytać własny plik CSV za pomocą przycisku <strong>Wybierz plik CSV</strong>, wyeksportować go bezpośrednio podając swój login w sekcji powyżej, albo kliknąć <strong>użyj mojego CSV</strong>, aby sprawdzić działanie na przykładowych danych.
+  </p>
+</div>
+
+<div class="help-section">
+  <h3>Wykres (ocena vs trudność)</h3>
+  <p>
+    Wykres punktowy przedstawia relację pomiędzy złożonością gry (oś X: ciężar od 1 do 5) a oceną społeczności BGG (oś Y: ocena od 1 do 10).
+    Gry podstawowe oznaczone są kolorem różowym (koła), a dodatki kolorem niebieskim (kwadraty).
+  </p>
+  <ul>
+    <li><strong>Powiększanie i przesuwanie:</strong> Użyj kółka myszy lub zaznacz obszar prostokątem, aby przybliżyć wybrany fragment wykresu. Przytrzymaj klawisz <em>Shift</em> i przeciągnij kursor, aby przesuwać widok. Na ekranach dotykowych użyj gestu zsunięcia/rozsunięcia palców.</li>
+    <li><strong>Podświetlanie:</strong> Kliknięcie punktu na wykresie zaznacza grę i otwiera panel szczegółów, a także synchronizuje zaznaczenie w tabeli i widoku kart.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h3>Dymek informacyjny na wykresie (Tooltip) i menu „Opcje”</h3>
+  <p>
+    Po najechaniu kursorem na dowolny punkt wykresu pojawia się dymek ze szczegółowymi danymi o grze.
+  </p>
+  <p>
+    <strong>Ważne:</strong> Menu <strong>Opcje</strong> (w prawym górnym rogu paska) służy <strong>wyłącznie do konfiguracji pól wyświetlanych w dymku na wykresie</strong>.
+    Zaznaczenie lub odznaczenie pozycji w tym menu decyduje tylko o tym, jakie parametry zobaczysz po najechaniu na punkt na wykresie. Nie zmienia to widoczności kolumn w tabeli.
+  </p>
+</div>
+
+<div class="help-section">
+  <h3>Tabela gier i widoczność kolumn (AG-Grid)</h3>
+  <p>
+    Tabela pozwala na szczegółowe przeglądanie, wyszukiwanie i sortowanie danych.
+  </p>
+  <ul>
+    <li><strong>Widoczność kolumn tabeli:</strong> Kolumny tabeli wybiera się <strong>wyłącznie z poziomu tabeli AG-Grid</strong>:
+      poprzez menu kolumny (ikona trzech kropek ⋮ w nagłówku kolumny lub kliknięcie nagłówka prawym przyciskiem myszy) albo w bocznym panelu kolumn po prawej stronie siatki (na większych ekranach).
+      Zmiana widoczności kolumn w tabeli nie wpływa na dymek wykresu.
+    </li>
+    <li><strong>Sortowanie i filtrowanie:</strong> Kliknij nagłówek kolumny, aby posortować dane. Pod nagłówkami dostępne są filtry tekstowe i liczbowe.</li>
+    <li><strong>Interakcja:</strong> Kliknięcie wiersza zaznacza grę na wykresie, a dwuklik (lub opcja z menu pod prawym przyciskiem myszy) otwiera stronę gry na BGG.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h3>Widok kart i urządzenia mobilne</h3>
+  <p>
+    Zakładka <strong>Karty</strong> oferuje przejrzysty, kafelkowy układ gier z szybkim wyszukiwaniem i sortowaniem według oceny, trudności, nazwy lub rankingu BGG. Jest to szczególnie wygodny sposób przeglądania kolekcji na smartfonach.
+  </p>
+</div>
+
+<div class="help-section">
+  <h3>Filtrowanie typów gier i zapamiętywanie ustawień</h3>
+  <p>
+    Przełączniki <strong>Gry podstawowe</strong> i <strong>Dodatki</strong> na górnym pasku pozwalają natychmiast ograniczyć widok do wybranej grupy tytułów.
+    Wszystkie Twoje preferencje — widoczność kolumn tabeli, pola dymka wykresu, filtry oraz tryb ciemny — są automatycznie zapisywane w pamięci przeglądarki. W każdej chwili możesz je przywrócić do stanu początkowego przyciskiem w menu Opcje.
+  </p>
+</div>`,
   switchToDark: "Przełącz na tryb ciemny",
   switchToLight: "Przełącz na tryb jasny",
 
@@ -193,12 +256,73 @@ export const translationsEn: TranslationKeys = {
   hideColumn: "Hide column",
   columnsMenu: "Columns",
   loadCsvTooltip: "First load CSV file",
+  tooltipOptionsTitle: "Chart tooltip content",
+  tooltipOptionsHint: "Select data displayed in the tooltip when hovering over a game.",
   infoTitle: "Info:",
   infoTextPart1: "Download your collection from bgg as csv, then upload it here. It can be done from here, click ",
   infoTextClickHere: "here",
   infoTextPart2: " and input your user name.",
   howToUseTitle: "How to use:",
-  howToUseText: `When you upload csv file, you'll see a graph of weight vs average score from BGG and a table containing uploaded games.<br>The table can be sorted and filtered.<br>When you click on a row containing a game, it'll be highlighted on a graph.<br>Columns can be shown or hidden via the ⋮ icon or right-click on a column header, or from the options panel (on the right).<br>Use the filter bar to include or exclude base games and expansions.`,
+  howToUseText: `<div class="help-section">
+  <h3>Loading your collection</h3>
+  <p>
+    This application visualizes and analyzes your board game collection exported from BoardGameGeek (BGG).
+    You can load your own CSV file using the <strong>Choose CSV file</strong> button, export it directly by entering your BGG username in the prompt above, or click <strong>use my CSV</strong> to explore sample data.
+  </p>
+</div>
+
+<div class="help-section">
+  <h3>Scatter chart (Rating vs Complexity)</h3>
+  <p>
+    The scatter plot illustrates the relationship between game complexity (X-axis: weight from 1 to 5) and community rating (Y-axis: score from 1 to 10).
+    Base games are displayed as magenta circles and expansions as blue squares.
+  </p>
+  <ul>
+    <li><strong>Zooming and panning:</strong> Use the mouse wheel or click and drag a rectangle to zoom in. Hold the <em>Shift</em> key and drag to pan across the chart. On touch devices, pinch to zoom.</li>
+    <li><strong>Selection:</strong> Clicking any point highlights the game, opens the detail preview pane, and syncs the selection across the table and cards view.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h3>Chart tooltip and the "Options" menu</h3>
+  <p>
+    Hovering over any point on the chart displays a tooltip with details about the game.
+  </p>
+  <p>
+    <strong>Important:</strong> The <strong>Options</strong> menu (on the upper controls bar) is used <strong>strictly to configure fields displayed in the chart tooltip</strong>.
+    Toggling options here decides only what information appears in the chart tooltip. It does not affect column visibility in the table.
+  </p>
+</div>
+
+<div class="help-section">
+  <h3>Game table and column visibility (AG-Grid)</h3>
+  <p>
+    The table provides comprehensive browsing, sorting, and filtering capabilities.
+  </p>
+  <ul>
+    <li><strong>Table column visibility:</strong> Columns are configured <strong>only from within the AG-Grid table</strong>:
+      either through the column menu (the three dots ⋮ icon on any column header or by right-clicking the header) or via the side tool panel on larger screens.
+      Changing columns in the table does not affect the chart tooltip.
+    </li>
+    <li><strong>Sorting and filtering:</strong> Click any column header to sort. Use the filter row below the headers for quick filtering by text or numeric ranges.</li>
+    <li><strong>Interaction:</strong> Clicking a row highlights the game on the chart; double-clicking (or using the right-click menu) opens the game's page on BGG.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h3>Cards view and mobile layout</h3>
+  <p>
+    The <strong>Cards</strong> tab provides an intuitive card-based layout featuring instant search and sorting by rating, complexity, title, or BGG rank. It is especially convenient on smartphones and smaller screens.
+  </p>
+</div>
+
+<div class="help-section">
+  <h3>Filters and saved preferences</h3>
+  <p>
+    Use the <strong>Base games</strong> and <strong>Expansions</strong> checkboxes to instantly include or exclude expansions.
+    Your preferences — including table column visibility, chart tooltip fields, active filters, and dark mode — are automatically persisted in your browser. You can revert to defaults at any time using the reset button in the Options menu.
+  </p>
+</div>`,
   switchToDark: "Switch to dark mode",
   switchToLight: "Switch to light mode",
 

@@ -39,6 +39,24 @@ describe('uiPreferences', () => {
     expect(loaded?.showExpansions).toBeTrue();
   });
 
+  it('should load saved tooltip visibility preferences independently', () => {
+    const prefs: UiPreferences = {
+      columnVisibility: { objectname: true, rank: false },
+      tooltipVisibility: { objectname: true, rank: true, bggbestplayers: false },
+      showStandalone: true,
+      showExpansions: false,
+      filterModel: null,
+      columnState: [],
+      darkMode: false,
+    };
+
+    saveUiPreferences(prefs);
+
+    const loaded = loadUiPreferences();
+    expect(loaded?.columnVisibility).toEqual({ objectname: true, rank: false });
+    expect(loaded?.tooltipVisibility).toEqual({ objectname: true, rank: true, bggbestplayers: false });
+  });
+
   it('should load saved preferences correctly when only expansions are selected', () => {
     const prefs: UiPreferences = {
       columnVisibility: { objectname: true },
